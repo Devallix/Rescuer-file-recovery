@@ -10,7 +10,10 @@ from rescuer.engine.fs.tsk import (
     TSK_FS_NAME_FLAG_UNALLOC,
     TSK_FS_NAME_TYPE_UNDEF,
     TskSource,
+    _folder_to_tsk_path,
 )
+from rescuer.engine.models import RecoverySource
+from rescuer.exceptions import DeviceError
 
 
 class _FakeName:
@@ -131,3 +134,82 @@ def test_convert_drops_orphan_files_virtual_dir_entry():
     fs = _FakeFS({45782: _FakeMeta(45782, 0, DIR_META, 0x0001)})
     entry = _source(fs)._convert(_FakeFile(name), "/")
     assert entry is None
+
+
+# ---------------- folder-scoped scans ----------------
+
+
+class _FakeFsInfo:
+    def __init__(self, ftype):
+        self.ftype = int(ftype)
+
+
+class _FakeTreeFS:
+    def __init__(self, dirs, ftype="2"):
+        self._dirs = dirs
+        self.info = _FakeFsInfo(ftype)
+
+    def open_dir(self, path):
+        if path in self._dirs:
+            return self._dirs[path]
+        raise RuntimeError(f"no dir {path}")
+
+
+def _reg_file(name, addr, deleted=False):
+    meta = _FakeMeta(addr, 100, REG_META, TSK_FS_META_FLAG_UNALLOC if deleted else 0x0001)
+    name_obj = _FakeName(name.encode(), 5, addr, TSK_FS_NAME_FLAG_UNALLOC if deleted else 0x0001)
+    return _FakeFile(name_obj, meta)
+
+
+def _dir_file(name, addr):
+    meta = _FakeMeta(addr, 0, DIR_META, 0x0001)
+    name_obj = _FakeName(name.encode(), 0x03, addr, 0x0001)
+    return _FakeFile(name_obj, meta)
+
+
+def test_folder_to_tsk_path():
+    assert _folder_to_tsk_path("C:\\Users\\Me", "C:\\") == "/Users/Me"
+    assert _folder_to_tsk_path("C:\\Users\\Me\\", "C:\\") == "/Users/Me"
+    assert _folder_to_tsk_path("C:\\", "C:\\") == "/"
+    assert _folder_to_tsk_path("D:\\Data", "D:\\") == "/Data"
+
+
+def test_folder_to_tsk_path_off_volume():
+    with pytest.raises(DeviceError):
+        _folder_to_tsk_path("D:\\Data", "C:\\")
+
+
+def test_resolve_scan_root_defaults_to_whole_volume():
+    src = RecoverySource(kind="volume", mount_point="C:\\")
+    assert TskSource._resolve_scan_root(src) == ("/", True)
+
+
+def test_resolve_scan_root_folder_scoped():
+    src = RecoverySource(kind="volume", mount_point="C:\\", path="C:\\Users\\Me\\Docs")
+    assert TskSource._resolve_scan_root(src) == ("/Users/Me/Docs", False)
+
+
+def test_resolve_scan_root_volume_root_folder():
+    src = RecoverySource(kind="volume", mount_point="C:\\", path="C:\\")
+    assert TskSource._resolve_scan_root(src) == ("/", True)
+
+
+def test_resolve_scan_root_image_uses_tsk_path():
+    src = RecoverySource(kind="image", image_path="x.img", path="/Docs")
+    assert TskSource._resolve_scan_root(src) == ("/Docs", False)
+
+
+def test_walk_full_volume_reaches_subfolders():
+    root = [_dir_file("sub", 10), _reg_file("root.txt", 1, deleted=True)]
+    sub = [_reg_file("gone.txt", 2, deleted=True), _reg_file("live.txt", 3)]
+    fs = _FakeTreeFS({"/": root, "/sub": sub})
+    src = TskSource(None, fs)
+    assert {e.name for e in src.iter_entries()} == {"sub", "root.txt", "gone.txt", "live.txt"}
+
+
+def test_walk_folder_only_scans_subtree():
+    root = [_dir_file("sub", 10), _reg_file("root.txt", 1, deleted=True)]
+    sub = [_reg_file("gone.txt", 2, deleted=True), _reg_file("live.txt", 3)]
+    fs = _FakeTreeFS({"/": root, "/sub": sub})
+    src = TskSource(None, fs, start_path="/sub", scan_orphans=False)
+    assert {e.name for e in src.iter_entries()} == {"gone.txt", "live.txt"}

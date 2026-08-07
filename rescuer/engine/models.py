@@ -13,6 +13,7 @@ class RecoverySource:
     label: str = ""
     fs_type: str = ""
     size: int = 0
+    path: str = ""
 
     @property
     def display_name(self) -> str:

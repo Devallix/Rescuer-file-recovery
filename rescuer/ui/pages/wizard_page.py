@@ -140,6 +140,16 @@ class WizardPage(Page):
         row.addWidget(self._image_label, 1)
         layout.addLayout(row)
 
+        folder_row = QHBoxLayout()
+        folder_btn = QPushButton("Scan a folder…")
+        folder_btn.setObjectName("Ghost")
+        folder_btn.clicked.connect(self._browse_folder)
+        folder_row.addWidget(folder_btn)
+        self._folder_label = QLabel("")
+        self._folder_label.setProperty("muted", True)
+        folder_row.addWidget(self._folder_label, 1)
+        layout.addLayout(folder_row)
+
         self._device_error = QLabel("")
         self._device_error.setStyleSheet("color: #FF4D5E;")
         layout.addWidget(self._device_error)
@@ -426,6 +436,7 @@ class WizardPage(Page):
                 size=v.capacity,
             )
             self._image_label.setText("")
+            self._folder_label.setText("")
             self._device_error.setText("")
 
     def _browse_image(self) -> None:
@@ -440,6 +451,44 @@ class WizardPage(Page):
         self._source = RecoverySource(kind="image", image_path=path, size=size)
         self._vol_list.clearSelection()
         self._image_label.setText(path)
+        self._folder_label.setText("")
+        self._device_error.setText("")
+
+    def _volume_for_path(self, path: str):
+        try:
+            drive = os.path.splitdrive(os.path.abspath(path))[0].upper()
+        except (OSError, ValueError):
+            return None
+        if not drive:
+            return None
+        for v in self._volumes:
+            mp = os.path.splitdrive(os.path.abspath(v.mount_point))[0].upper()
+            if mp == drive:
+                return v
+        return None
+
+    def _browse_folder(self) -> None:
+        folder = QFileDialog.getExistingDirectory(self, "Select a folder to scan for deleted files")
+        if not folder:
+            return
+        volume = self._volume_for_path(folder)
+        if volume is None:
+            self._device_error.setText(
+                "The selected folder is not on a volume this app can scan. "
+                "Choose a folder on a local drive, or load a disk image instead."
+            )
+            return
+        self._source = RecoverySource(
+            kind="volume",
+            mount_point=volume.mount_point,
+            label=volume.label or "",
+            fs_type=volume.file_system or "",
+            size=volume.capacity,
+            path=folder,
+        )
+        self._vol_list.clearSelection()
+        self._image_label.setText("")
+        self._folder_label.setText(folder)
         self._device_error.setText("")
 
     # ---------------- navigation ----------------
@@ -829,6 +878,7 @@ class WizardPage(Page):
         self._scan_progress.setValue(0)
         self._review_table.setRowCount(0)
         self._image_label.setText("")
+        self._folder_label.setText("")
         self._vol_list.clearSelection()
         self._recovered_ok = 0
         self._recovered_failed = 0

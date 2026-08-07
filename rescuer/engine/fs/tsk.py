@@ -1,4 +1,5 @@
 import logging
+import os
 
 import pytsk3
 
@@ -32,11 +33,34 @@ def _vol_path(mount_point: str) -> str:
     return f"\\\\.\\{mp}"
 
 
+def _folder_to_tsk_path(folder: str, mount_point: str) -> str:
+    """Map a Windows folder under a volume to the TSK-style path used for traversal."""
+    mount = (mount_point or "").strip()
+    if not mount:
+        raise DeviceError("Folder scans require a mounted volume.")
+    folder = (folder or "").strip()
+    if not folder:
+        raise DeviceError("No folder selected.")
+    try:
+        mount = os.path.normpath(os.path.abspath(mount))
+        folder = os.path.normpath(os.path.abspath(folder))
+        rel = os.path.relpath(folder, mount)
+    except ValueError as exc:
+        raise DeviceError(f"Could not resolve {folder} against {mount_point}.") from exc
+    if rel == ".." or rel.startswith("..\\") or os.path.isabs(rel):
+        raise DeviceError(f"The folder {folder} is not on volume {mount_point}.")
+    if rel == ".":
+        return "/"
+    return "/" + rel.replace("\\", "/")
+
+
 class TskSource:
-    def __init__(self, img, fs) -> None:
+    def __init__(self, img, fs, start_path: str = "/", scan_orphans: bool = True) -> None:
         self.img = img
         self.fs = fs
         self.fs_type = str(fs.info.ftype)
+        self.start_path = start_path
+        self.scan_orphans = scan_orphans
 
     @classmethod
     def open(cls, source: RecoverySource) -> "TskSource":
@@ -48,22 +72,49 @@ class TskSource:
             else:
                 raise DeviceError(f"Unsupported source kind: {source.kind}")
             fs = pytsk3.FS_Info(img)
-            return cls(img, fs)
+            start_path, scan_orphans = cls._resolve_scan_root(source)
+            if start_path != "/":
+                try:
+                    fs.open_dir(start_path)
+                except (IOError, OSError, RuntimeError) as exc:
+                    raise DeviceError(
+                        f"Folder {source.path} was not found on {source.display_name}: {exc}"
+                    ) from exc
+            return cls(img, fs, start_path=start_path, scan_orphans=scan_orphans)
         except (IOError, OSError, RuntimeError) as exc:
             raise DeviceAccessError(
                 f"Could not open {source.display_name}: {exc}. "
                 "Raw access to volumes requires administrator privileges."
             ) from exc
 
+    @staticmethod
+    def _resolve_scan_root(source: RecoverySource) -> tuple[str, bool]:
+        """Return (tsk_start_path, scan_orphans) honouring a folder-scoped scan."""
+        folder = (source.path or "").strip()
+        if not folder:
+            return "/", True
+        if source.kind == "image":
+            tsk_path = "/" + folder.strip("/").replace("\\", "/")
+            tsk_path = tsk_path.rstrip("/") or "/"
+            if tsk_path == "/":
+                return "/", True
+            return tsk_path, False
+        tsk_path = _folder_to_tsk_path(folder, source.mount_point)
+        if tsk_path == "/":
+            return "/", True
+        return tsk_path, False
+
     def walk(self) -> list[FsEntry]:
         return list(self.iter_entries())
 
     def iter_entries(self, progress=None, cancel_flag: list[bool] | None = None):
         seen: set[int] = set()
-        for entry in self._iter_dir("/", progress=progress, cancel_flag=cancel_flag):
+        for entry in self._iter_dir(self.start_path, progress=progress, cancel_flag=cancel_flag):
             if entry.inode >= 0:
                 seen.add(entry.inode)
             yield entry
+        if not self.scan_orphans:
+            return
         # Orphaned files whose parent directory was itself deleted are not
         # reachable through the tree; TSK exposes them through the virtual
         # $OrphanFiles directory (TSK_FS_ORPHANDIR_INUM == last_inum).
@@ -175,7 +226,7 @@ class TskSource:
         if is_orphan:
             is_dir = bool(meta and meta.type == pytsk3.TSK_FS_META_TYPE_DIR)
 
-        full_path = name if parent == "/" else f"{parent}/{name}"
+        full_path = f"/{name}" if parent == "/" else f"{parent}/{name}"
         size = meta.size if meta else 0
         is_deleted = True if is_orphan else bool(name_info.flags & TSK_FS_NAME_FLAG_UNALLOC)
         addr = meta.addr if meta else (addr_hint if addr_hint is not None else -1)
