@@ -1,7 +1,7 @@
 import datetime
 import os
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import (
     QButtonGroup,
     QCheckBox,
@@ -49,6 +49,15 @@ def _human(size: int) -> str:
     return f"{value:.1f} PB"
 
 
+def _fmt_elapsed(delta: datetime.timedelta) -> str:
+    total = int(delta.total_seconds())
+    hours, rem = divmod(total, 3600)
+    minutes, seconds = divmod(rem, 60)
+    if hours:
+        return f"{hours}:{minutes:02d}:{seconds:02d}"
+    return f"{minutes:02d}:{seconds:02d}"
+
+
 class WizardPage(Page):
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
@@ -69,6 +78,11 @@ class WizardPage(Page):
         self._allowed = 0
         self._scan_mode: str | None = None
         self._recycle_pending_source: RecoverySource | None = None
+
+        self._scan_started: datetime.datetime | None = None
+        self._scan_clock = QTimer(self)
+        self._scan_clock.setInterval(1000)
+        self._scan_clock.timeout.connect(self._update_scan_timer)
 
         root = QVBoxLayout(self)
         root.setContentsMargins(28, 24, 28, 24)
@@ -213,6 +227,10 @@ class WizardPage(Page):
         self._scan_found.setProperty("muted", True)
         layout.addWidget(self._scan_found)
 
+        self._scan_timer = QLabel("")
+        self._scan_timer.setProperty("muted", True)
+        layout.addWidget(self._scan_timer)
+
         cancel = QPushButton("Cancel scan")
         cancel.setObjectName("Danger")
         cancel.clicked.connect(self._cancel_scan)
@@ -291,9 +309,14 @@ class WizardPage(Page):
         layout.setContentsMargins(8, 8, 8, 8)
         layout.setSpacing(14)
 
-        heading = QLabel("Recovery complete")
+        heading = QLabel("Complete")
         heading.setStyleSheet("font-size: 18px; font-weight: 600;")
         layout.addWidget(heading)
+
+        self._complete_note = QLabel("")
+        self._complete_note.setProperty("muted", True)
+        self._complete_note.setWordWrap(True)
+        layout.addWidget(self._complete_note)
 
         self._complete_label = QLabel("")
         self._complete_label.setWordWrap(True)
@@ -333,6 +356,7 @@ class WizardPage(Page):
         self._controller.progress.connect(self._on_scan_progress)
         self._controller.found.connect(self._on_scan_found)
         self._controller.finished.connect(self._on_scan_finished)
+        self._controller.cancelled.connect(self._on_scan_cancelled)
         self._controller.failed.connect(self._on_scan_failed)
         self._controller.blocked.connect(self._on_scan_blocked)
         self._queue._signals.item_done.connect(self._on_item_done)
@@ -432,17 +456,20 @@ class WizardPage(Page):
             if item is None:
                 continue
             flags = item.flags()
-            if i <= self._allowed:
+            if self._step_reachable(i):
                 item.setFlags(flags | Qt.ItemFlag.ItemIsEnabled)
             else:
                 item.setFlags(flags & ~Qt.ItemFlag.ItemIsEnabled)
-        if index == 4:
-            item = self._step_list.item(4)
-            if item is not None:
-                item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEnabled)
+
+    def _step_reachable(self, index: int) -> bool:
+        if index <= self._allowed:
+            return True
+        # The Complete step opens once a scan has ended (with or without a
+        # completed recovery) so partial results can be wrapped up there.
+        return index == 4 and self._allowed >= 3
 
     def _on_step_clicked(self, row: int) -> None:
-        if row > self._allowed:
+        if not self._step_reachable(row):
             return
         self._stack.setCurrentIndex(row)
 
@@ -489,6 +516,7 @@ class WizardPage(Page):
         self._scan_progress.setRange(0, 0)
         self._scan_label.setText("Scanning…")
         self._scan_found.setText("")
+        self._start_scan_clock()
         self._go(2)
 
     def _start_recycle_scan(self) -> None:
@@ -509,6 +537,7 @@ class WizardPage(Page):
         self._scan_progress.setRange(0, 0)
         self._scan_label.setText("Scanning Recycle Bin…")
         self._scan_found.setText("")
+        self._start_scan_clock()
         self._go(2)
 
     def start_recycle_scan_for(self) -> None:
@@ -522,6 +551,8 @@ class WizardPage(Page):
 
     def _on_scan_blocked(self, _scan_id: int, error: str) -> None:
         self._recycle_pending_source = self._source
+        self._stop_scan_clock()
+        self._scan_timer.setText("")
         self._scan_progress.setRange(0, 1000)
         self._scan_progress.setValue(0)
         self._scan_label.setText(f"Scan blocked: {error}")
@@ -546,6 +577,8 @@ class WizardPage(Page):
 
     def _abort_scan(self) -> None:
         self._controller.cancel()
+        self._stop_scan_clock()
+        self._scan_timer.setText("")
         self._scan_progress.setRange(0, 1000)
         self._scan_progress.setValue(0)
         self._scan_found.setText("")
@@ -561,6 +594,20 @@ class WizardPage(Page):
         self._controller.cancel()
         self._scan_label.setText("Cancelling…")
 
+    def _start_scan_clock(self) -> None:
+        self._scan_started = datetime.datetime.now()
+        self._scan_timer.setText("")
+        self._scan_clock.start()
+
+    def _update_scan_timer(self) -> None:
+        if self._scan_started is None:
+            return
+        elapsed = datetime.datetime.now() - self._scan_started
+        self._scan_timer.setText(f"Elapsed: {_fmt_elapsed(elapsed)}")
+
+    def _stop_scan_clock(self) -> None:
+        self._scan_clock.stop()
+
     def _on_scan_progress(self, _scan_id: int, fraction: float, phase: str) -> None:
         if self._scan_mode in ("quick", "recycle"):
             self._scan_progress.setRange(0, 0)
@@ -574,6 +621,9 @@ class WizardPage(Page):
         self._scan_found.setText(f"{count} candidates found")
 
     def _on_scan_finished(self, _scan_id: int) -> None:
+        self._stop_scan_clock()
+        self._update_scan_timer()
+        self._complete_note.setText(self._scan_summary(cancelled=False))
         self._scan_progress.setRange(0, 1000)
         self._scan_progress.setValue(1000)
         self._scan_label.setText("Scan finished. Loading results…")
@@ -581,7 +631,36 @@ class WizardPage(Page):
         self._load_vaults()
         self._go(3)
 
+    def _on_scan_cancelled(self, _scan_id: int, count: int) -> None:
+        self._stop_scan_clock()
+        self._update_scan_timer()
+        self._complete_note.setText(self._scan_summary(cancelled=True))
+        self._scan_progress.setRange(0, 1000)
+        self._scan_progress.setValue(0)
+        self._load_review_rows()
+        self._load_vaults()
+        self._review_count.setText(
+            f"{count} file(s) — scan cancelled, partial results are recoverable"
+        )
+        self._go(3)
+
+    def _scan_summary(self, cancelled: bool) -> str:
+        count = 0
+        if self._scan_id is not None:
+            rows = self._ctx.db.query(
+                "SELECT COUNT(*) AS n FROM files WHERE scan_id = ?", (self._scan_id,)
+            )
+            if rows:
+                count = rows[0]["n"]
+        elapsed = ""
+        if self._scan_started is not None:
+            elapsed = _fmt_elapsed(datetime.datetime.now() - self._scan_started)
+        if cancelled:
+            return f"Scan cancelled · {count} partial file(s) found · {elapsed}"
+        return f"Scan finished · {count} file(s) found · {elapsed}"
+
     def _on_scan_failed(self, _scan_id: int, error: str) -> None:
+        self._stop_scan_clock()
         self._scan_progress.setRange(0, 1000)
         self._scan_progress.setValue(0)
         self._scan_label.setText(f"Scan failed: {error}")
@@ -743,6 +822,10 @@ class WizardPage(Page):
         self._scan_mode = None
         self._recycle_pending_source = None
         self._restoring = False
+        self._stop_scan_clock()
+        self._scan_started = None
+        self._scan_timer.setText("")
+        self._complete_note.setText("")
         self._scan_progress.setValue(0)
         self._review_table.setRowCount(0)
         self._image_label.setText("")

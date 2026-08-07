@@ -52,6 +52,34 @@ def test_same_volume_guard():
     assert same_volume(img, "C:\\out") is False
 
 
+def test_cancel_persists_partial_results(db: Database, monkeypatch):
+    from rescuer.engine.models import FoundFile, ScanConfig
+    from rescuer.engine.scan.controller import ScanSignals, ScanWorker
+
+    source = RecoverySource(kind="image", image_path="x.img", size=1000)
+    config = ScanConfig(mode="quick", source=source)
+
+    def fake_quick_scan(source, config, progress=None, cancel_flag=None):
+        return [
+            FoundFile(name="a.txt", size=10, is_deleted=True, found_by="filesystem", path="/a.txt", inode=1),
+            FoundFile(name="b.txt", size=20, is_deleted=True, found_by="filesystem", path="/b.txt", inode=2),
+        ]
+
+    monkeypatch.setattr("rescuer.engine.scan.controller.run_quick_scan", fake_quick_scan)
+
+    sid = db.execute("INSERT INTO scans (device_id, mode, status) VALUES (?, 'quick', 'running')", ("x.img",))
+    signals = ScanSignals()
+    outcomes: list = []
+    signals.cancelled.connect(lambda s, c: outcomes.append((s, c)))
+    ScanWorker(db, config, sid, None, signals, [True]).run()
+
+    assert outcomes and outcomes[0] == (sid, 2)
+    rows = db.query("SELECT name FROM files WHERE scan_id = ?", (sid,))
+    assert {r["name"] for r in rows} == {"a.txt", "b.txt"}
+    status = db.query("SELECT status FROM scans WHERE id = ?", (sid,))[0]["status"]
+    assert status == "cancelled"
+
+
 def test_imaging_copy_roundtrip(tmp_path: Path, fat_image: str):
     dest = str(tmp_path / "copy.img")
     result = create_image(fat_image, dest)

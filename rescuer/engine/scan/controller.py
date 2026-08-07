@@ -19,6 +19,7 @@ class ScanSignals(QObject):
     progress = Signal(int, float, str)
     found = Signal(int, int)
     finished = Signal(int)
+    cancelled = Signal(int, int)
     failed = Signal(int, str)
     blocked = Signal(int, str)
 
@@ -79,11 +80,16 @@ class ScanWorker(QThread):
                 raise ScanError(f"Unknown scan mode: {mode}")
 
             if self._cancel and self._cancel[0]:
+                # Keep whatever was found before the cancel so the user can
+                # still review and recover the partial results.
+                inserted = self._persist(files) if files else 0
                 self._db.execute(
-                    "UPDATE scans SET status='cancelled', finished_at=? WHERE id=?",
-                    (_now(), self._scan_id),
+                    "UPDATE scans SET status='cancelled', finished_at=?, found_count=?, "
+                    "sectors_scanned=? WHERE id=?",
+                    (_now(), inserted, sum(f.size for f in files), self._scan_id),
                 )
-                self._signals.finished.emit(self._scan_id)
+                self._emit("scan_finished", scan_id=self._scan_id, count=inserted)
+                self._signals.cancelled.emit(self._scan_id, inserted)
                 return
 
             inserted = self._persist(files)
@@ -177,6 +183,7 @@ class ScanController(QObject):
     progress = Signal(int, float, str)
     found = Signal(int, int)
     finished = Signal(int)
+    cancelled = Signal(int, int)
     failed = Signal(int, str)
     blocked = Signal(int, str)
 
@@ -190,6 +197,7 @@ class ScanController(QObject):
         self._signals.progress.connect(self.progress)
         self._signals.found.connect(self.found)
         self._signals.finished.connect(self.finished)
+        self._signals.cancelled.connect(self.cancelled)
         self._signals.failed.connect(self.failed)
         self._signals.blocked.connect(self.blocked)
 
