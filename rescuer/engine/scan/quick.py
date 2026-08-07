@@ -17,16 +17,29 @@ def _iso(ts: float | None) -> str | None:
         return None
 
 
-def run_quick_scan(source: RecoverySource, config: ScanConfig) -> list[FoundFile]:
+def run_quick_scan(
+    source: RecoverySource,
+    config: ScanConfig,
+    progress=None,
+    cancel_flag: list[bool] | None = None,
+) -> list[FoundFile]:
     tsk = TskSource.open(source)
-    entries = tsk.walk()
     filters = config.filters or {}
     deleted_only = filters.get("deleted_only", False)
     min_size = filters.get("min_size", 0)
     max_size = filters.get("max_size", 0)
 
     results: list[FoundFile] = []
-    for entry in entries:
+    walked = [0]
+
+    def _on_entry() -> None:
+        walked[0] += 1
+        if progress is not None and walked[0] % 500 == 0:
+            progress(walked[0], len(results))
+
+    for entry in tsk.iter_entries(progress=_on_entry, cancel_flag=cancel_flag):
+        if cancel_flag and cancel_flag[0]:
+            break
         if entry.is_dir:
             continue
         if deleted_only and not entry.is_deleted:
@@ -53,4 +66,6 @@ def run_quick_scan(source: RecoverySource, config: ScanConfig) -> list[FoundFile
                 reader=entry.reader,
             )
         )
+    if progress is not None:
+        progress(walked[0], len(results))
     return results

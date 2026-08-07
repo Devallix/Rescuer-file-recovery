@@ -2,7 +2,7 @@ from PySide6.QtCore import Qt, QPropertyAnimation, Signal
 from PySide6.QtGui import QAction
 from PySide6.QtWidgets import QGraphicsOpacityEffect, QHBoxLayout, QLabel, QMainWindow, QMenuBar, QStackedWidget, QStatusBar, QWidget
 
-from rescuer import APP_NAME, APP_TAGLINE, APP_TAGLINE
+from rescuer import APP_NAME, APP_TAGLINE
 from rescuer.core.app_context import AppContext
 from rescuer.core.theme import get_palette
 from rescuer.integrations.windows.admin import is_admin
@@ -137,6 +137,12 @@ class MainWindow(QMainWindow):
         about = QAction("About", self)
         about.triggered.connect(self._show_about)
         help_menu.addAction(about)
+        developer = QAction("Developer", self)
+        developer.triggered.connect(self._show_developer)
+        help_menu.addAction(developer)
+        eula = QAction("End User License Agreement", self)
+        eula.triggered.connect(self._open_eula)
+        help_menu.addAction(eula)
         self.setMenuBar(menubar)
 
     def _open_user_guide(self) -> None:
@@ -148,6 +154,20 @@ class MainWindow(QMainWindow):
         else:
             from PySide6.QtWidgets import QMessageBox
             QMessageBox.information(self, "User Guide", "Open docs/USER_GUIDE.md in your editor.")
+
+    def _open_eula(self) -> None:
+        import os
+        import sys
+        from pathlib import Path
+        if getattr(sys, "frozen", False):
+            eula = Path(getattr(sys, "_MEIPASS", ".")) / "docs" / "EULA.txt"
+        else:
+            eula = Path(__file__).resolve().parents[2] / "docs" / "EULA.txt"
+        if eula.exists():
+            os.startfile(str(eula))
+        else:
+            from PySide6.QtWidgets import QMessageBox
+            QMessageBox.information(self, "End User License Agreement", "Open docs/EULA.txt in your editor.")
 
     def _apply_theme_name(self, theme: str) -> None:
         palette = get_palette(theme)
@@ -191,3 +211,57 @@ class MainWindow(QMainWindow):
             "Repository: https://github.com/rescuer-app/rescuer<br><br>"
             "Proprietary. All rights reserved.",
         )
+
+    def _show_developer(self) -> None:
+        import datetime
+
+        from PySide6.QtGui import QPixmap
+        from PySide6.QtWidgets import QDialog, QVBoxLayout
+
+        from rescuer.paths import Paths
+
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Developer")
+        dialog.setModal(True)
+        dialog.setFixedWidth(420)
+
+        layout = QVBoxLayout(dialog)
+        layout.setContentsMargins(28, 24, 28, 24)
+        layout.setSpacing(14)
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        logo = QLabel()
+        logo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        logo_pix = QPixmap(str(Paths.img_dir / "logo.png"))
+        if not logo_pix.isNull():
+            logo.setPixmap(logo_pix.scaled(
+                96, 110,
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation,
+            ))
+        layout.addWidget(logo)
+
+        text = QLabel("Rescuer is Developed by Devallix")
+        text.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        text.setStyleSheet("font-size: 16px; font-weight: 600;")
+        layout.addWidget(text)
+
+        dev = QLabel()
+        dev.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        dev_pix = QPixmap(str(Paths.img_dir / "developer.png"))
+        if not dev_pix.isNull():
+            dev.setPixmap(dev_pix.scaled(
+                200, 200,
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation,
+            ))
+        layout.addWidget(dev)
+
+        copyright_label = QLabel(
+            f"\N{COPYRIGHT SIGN} Copyright Devallix {datetime.date.today().year}. All Rights Reserved"
+        )
+        copyright_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        copyright_label.setProperty("muted", True)
+        layout.addWidget(copyright_label)
+
+        dialog.exec()

@@ -1,0 +1,285 @@
+================================================================================
+                    END USER LICENSE AGREEMENT (EULA)
+================================================================================
+
+APPLICATION:  Rescuer - Professional File Recovery & Data Restoration Suite
+VERSION:      0.1.0
+DEVELOPER:    Devallix
+COPYRIGHT:    Copyright (c) 2026 Devallix. All Rights Reserved.
+TAGLINE:      "Bringing Lost Files Back to Life"
+EFFECTIVE:    August 7, 2026
+
+--------------------------------------------------------------------------------
+1. INTRODUCTION
+--------------------------------------------------------------------------------
+
+This End User License Agreement ("Agreement" or "EULA") is a legal agreement
+between you (an individual or a single legal entity, hereinafter "you" or
+"Licensee") and Devallix ("Developer" or "Licensor") governing your use of the
+software application known as "Rescuer" (the "Application" or "Software"),
+including all associated files, modules, documentation, images, icons, data
+packages, and any updates or upgrades provided to you by the Developer.
+
+By installing, copying, downloading, accessing, or otherwise using the
+Application, you acknowledge that you have read this Agreement, understand
+it, and agree to be bound by its terms. If you do not agree to the terms of
+this Agreement, you must not install or use the Application and must delete
+all copies in your possession.
+
+--------------------------------------------------------------------------------
+2. DESCRIPTION OF THE APPLICATION
+--------------------------------------------------------------------------------
+
+Rescuer is a professional file recovery and data restoration suite designed
+for the Microsoft Windows operating system (Windows 10 and Windows 11).
+The Application provides, among other features:
+
+  - A storage dashboard and drive manager that enumerate connected storage
+    volumes and their health and capacity information;
+  - A Recovery Wizard supporting several scan methodologies, including
+    quick (filesystem metadata) scans, deep signature-based scans, partition
+    scans, and Windows Recycle Bin scans;
+  - Byte-for-byte disk imaging of storage devices (raw and forensic image
+    formats), used to enable safe, offline recovery from captured images;
+  - File preview and quality/confidence scoring to help assess recoverable
+    candidates;
+  - Generation of professional, shareable reports in HTML, PDF, and CSV
+    formats;
+  - Local settings management, including user-selectable themes and update
+    preferences.
+
+The Application is built using the Python programming language (Python 3.13
+or newer), the Qt framework through PySide6, and The Sleuth Kit (TSK) via the
+pytsk3 binding for low-level filesystem analysis. The Application stores its
+user data (databases, configuration, logs, reports, and images) locally on
+your computer.
+
+--------------------------------------------------------------------------------
+3. DEVELOPER INFORMATION
+--------------------------------------------------------------------------------
+
+Developer name:  Devallix
+Product:         Rescuer (version 0.1.0)
+Application ID:  com.rescuer.app
+Tagline:         Bringing Lost Files Back to Life
+Platform:        Microsoft Windows (64-bit), Windows 10 / Windows 11
+Repository:      https://github.com/rescuer-app/rescuer
+
+For inquiries regarding this Agreement, licensing, or support, please contact
+the Developer through the official repository or distribution channel from
+which you obtained the Application.
+
+--------------------------------------------------------------------------------
+4. GRANT OF LICENSE
+--------------------------------------------------------------------------------
+
+Subject to the terms and conditions of this Agreement, the Developer grants
+you a limited, non-exclusive, non-transferable, non-sublicensable, revocable
+license to install and use the Application on one or more computers that you
+own or control, for your personal, non-commercial or internal business use,
+in accordance with the Application's documentation and this Agreement.
+
+This license does not grant you any right to:
+
+  (a) sell, rent, lease, lend, redistribute, sublicense, or otherwise
+      transfer the Application or any portion of it to any third party;
+  (b) copy, reproduce, or duplicate the Application except as necessary to
+      install and use it on your own systems;
+  (c) modify, adapt, translate, reverse engineer, decompile, disassemble, or
+      attempt to derive the source code of the Application, except to the
+      extent expressly permitted by applicable law;
+  (d) remove, obscure, or alter any copyright notices, trademarks, or other
+      proprietary rights markings on or in the Application; or
+  (e) use the Application to violate any applicable law, regulation, or the
+      rights of any third party.
+
+--------------------------------------------------------------------------------
+5. OWNERSHIP AND INTELLECTUAL PROPERTY
+--------------------------------------------------------------------------------
+
+The Application is licensed, not sold. The Developer and its licensors retain
+all right, title, and interest in and to the Application, including all
+copyrights, patents, trademarks, trade secrets, and other intellectual
+property rights. "Rescuer" and "Devallix" are proprietary names and marks of
+the Developer. The look and feel, logos, branding, and artwork shipped with
+the Application are the exclusive property of the Developer. No rights are
+granted to you under this Agreement other than the limited license described
+in Section 4. All rights not expressly granted are reserved by the Developer.
+
+--------------------------------------------------------------------------------
+6. THIRD-PARTY COMPONENTS
+--------------------------------------------------------------------------------
+
+The Application incorporates third-party open-source components. This
+Agreement does not alter the terms of the licenses applicable to those
+components, which are used and distributed in accordance with their own
+licensing terms. Notable components include, without limitation:
+
+  - The Qt application framework and PySide6 (licensed under the GNU Lesser
+    General Public License, LGPL);
+  - The Sleuth Kit (TSK) and the pytsk3 Python binding;
+  - Various Python libraries used for filesystem access, imaging, document
+    preview, reporting, and networking.
+
+You acknowledge that the Developer makes no warranty with respect to such
+third-party components except as provided in their respective licenses.
+
+--------------------------------------------------------------------------------
+7. RECOVERY PERFORMANCE AND NO GUARANTEE OF DATA
+--------------------------------------------------------------------------------
+
+YOU UNDERSTAND AND AGREE THAT DATA RECOVERY IS INHERENTLY UNCERTAIN AND
+BEST-EFFORT IN NATURE. The Application attempts to locate and restore deleted
+or lost files, but the Developer does not and cannot guarantee that any
+specific file, or any file at all, will be recovered successfully, or that
+recovered files will be complete or intact.
+
+Factors beyond the Developer's control may permanently destroy recoverable
+data, including but not limited to:
+
+  - Solid-state drives (SSDs) that issue TRIM commands, which erase freed
+    data shortly after deletion;
+  - The operating system reusing or overwriting filesystem metadata (for
+    example, MFT entries or directory records) for new files;
+  - New data being written to the storage device after deletion;
+  - Filesystem corruption, physical device damage, or hardware failure;
+  - Access restrictions, including the requirement to run the Application
+    with administrator privileges to perform raw reads of live volumes.
+
+YOU ARE STRONGLY ADVISED TO STOP USING THE AFFECTED STORAGE DEVICE IMMEDIATELY
+AFTER DATA LOSS AND TO RECOVER FILES TO A DIFFERENT DEVICE THAN THE SOURCE.
+The Developer recommends that you maintain independent backups of all
+important data at all times. The Application is not a substitute for a
+reliable backup strategy.
+
+--------------------------------------------------------------------------------
+8. DISCLAIMER OF WARRANTIES
+--------------------------------------------------------------------------------
+
+THE APPLICATION IS PROVIDED "AS IS" AND "AS AVAILABLE," WITHOUT WARRANTY OF
+ANY KIND, EXPRESS OR IMPLIED, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, AND
+NON-INFRINGEMENT. THE DEVELOPER DOES NOT WARRANT THAT THE APPLICATION WILL
+MEET YOUR REQUIREMENTS, THAT ITS OPERATION WILL BE UNINTERRUPTED OR
+ERROR-FREE, OR THAT ANY DATA RECOVERED WILL BE COMPLETE, ACCURATE, OR USABLE.
+THE ENTIRE RISK ARISING OUT OF THE USE OR PERFORMANCE OF THE APPLICATION
+REMAINS WITH YOU.
+
+--------------------------------------------------------------------------------
+9. LIMITATION OF LIABILITY
+--------------------------------------------------------------------------------
+
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL THE
+DEVELOPER, ITS AFFILIATES, OFFICERS, DIRECTORS, EMPLOYEES, AGENTS, OR
+LICENSORS BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL,
+EXEMPLARY, OR PUNITIVE DAMAGES, OR FOR ANY LOSS OF DATA, LOSS OF PROFITS,
+LOSS OF GOODWILL, OR INTERRUPTION OF BUSINESS, ARISING OUT OF OR RELATING TO
+THE USE OF OR INABILITY TO USE THE APPLICATION, EVEN IF THE DEVELOPER HAS
+BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+
+THE DEVELOPER'S TOTAL AGGREGATE LIABILITY FOR ALL CLAIMS ARISING OUT OF OR
+RELATING TO THIS AGREEMENT OR THE APPLICATION, WHETHER IN CONTRACT, TORT
+(INCLUDING NEGLIGENCE), OR OTHERWISE, SHALL NOT EXCEED THE AMOUNT PAID BY
+YOU, IF ANY, FOR THE APPLICATION. BECAUSE SOME JURISDICTIONS DO NOT ALLOW
+THE EXCLUSION OR LIMITATION OF INCIDENTAL OR CONSEQUENTIAL DAMAGES, THE
+FOREGOING LIMITATIONS MAY NOT APPLY TO YOU.
+
+--------------------------------------------------------------------------------
+10. DATA COLLECTION, PRIVACY, AND LOCAL STORAGE
+--------------------------------------------------------------------------------
+
+The Application is designed to store your data locally on your own computer,
+including a local database, configuration file, application logs, generated
+reports, and captured disk images. Specifically:
+
+  - Settings and application state are stored in a local configuration file;
+  - Scan results, recovery history, and reporting records are stored in a
+    local SQLite database;
+  - Application logs are written to a local log directory;
+  - Generated reports and disk images are saved only to locations you choose.
+
+The Application may, if enabled in its settings, perform a periodic network
+check for software updates. Such a check transmits only the current version
+of the Application to the update endpoint and does not upload personal files,
+scan results, or recovered data. You may disable update checks at any time in
+the Application's settings. The Application does not collect, transmit, or
+sell your personal data. However, you acknowledge that using the Application
+on hardware you do not own, or recovering files that do not belong to you,
+may violate the rights of third parties and applicable law, and you are solely
+responsible for ensuring that you have the legal right to access and recover
+such data.
+
+--------------------------------------------------------------------------------
+11. TERMINATION
+--------------------------------------------------------------------------------
+
+This Agreement is effective until terminated. Your rights under this
+Agreement terminate automatically without notice if you fail to comply with
+any term of this Agreement. Upon termination, you must cease all use of the
+Application and destroy all copies, in whole or in part, in your possession
+or control. The provisions of this Agreement which by their nature should
+survive termination shall survive, including without limitation Sections 5,
+8, 9, and 14.
+
+--------------------------------------------------------------------------------
+12. UPDATES AND MODIFICATIONS
+--------------------------------------------------------------------------------
+
+The Developer may, from time to time, provide updates, upgrades, or new
+versions of the Application. Such updates may be provided automatically if
+the update-check feature is enabled, or may be made available for download.
+This Agreement governs all such updates unless the Developer provides
+different terms with a particular update, in which case those different terms
+apply. The Developer reserves the right to modify this Agreement at any time;
+your continued use of the Application after any such modification
+constitutes your acceptance of the revised terms.
+
+--------------------------------------------------------------------------------
+13. HIGH-RISK USE
+--------------------------------------------------------------------------------
+
+The Application is not designed, intended, or authorized for use in hazardous
+environments requiring fail-safe performance, including without limitation in
+the operation of nuclear facilities, aircraft navigation or communication
+systems, life-support systems, or any other application in which failure of
+the Application could lead to death, personal injury, or severe property or
+environmental damage.
+
+--------------------------------------------------------------------------------
+14. GOVERNING LAW AND SEVERABILITY
+--------------------------------------------------------------------------------
+
+This Agreement shall be governed by and construed in accordance with the
+laws applicable in the jurisdiction in which the Developer is established,
+without regard to its conflict-of-law provisions. You agree that any legal
+proceeding arising out of or relating to this Agreement or the Application
+shall be brought in the competent courts of that jurisdiction, and you
+hereby consent to the exclusive jurisdiction of such courts. If any
+provision of this Agreement is held to be invalid or unenforceable, the
+remaining provisions shall continue in full force and effect.
+
+--------------------------------------------------------------------------------
+15. ENTIRE AGREEMENT
+--------------------------------------------------------------------------------
+
+This Agreement constitutes the entire agreement between you and the
+Developer regarding the Application and supersedes all prior or
+contemporaneous agreements, communications, representations, and
+understandings, whether written or oral, relating to the Application.
+No amendment to this Agreement shall be effective unless made in writing and
+signed by an authorized representative of the Developer.
+
+--------------------------------------------------------------------------------
+16. ACKNOWLEDGMENT
+--------------------------------------------------------------------------------
+
+BY INSTALLING, COPYING, OR USING THE APPLICATION, YOU ACKNOWLEDGE THAT YOU
+HAVE READ THIS AGREEMENT, UNDERSTAND IT, AND AGREE TO BE BOUND BY ITS TERMS
+AND CONDITIONS. YOU FURTHER ACKNOWLEDGE THAT THE APPLICATION RECOVERS DATA
+ON A BEST-EFFORT BASIS ONLY, THAT NO GUARANTEE OF RECOVERY IS PROVIDED, AND
+THAT YOU ARE SOLELY RESPONSIBLE FOR BACKING UP YOUR DATA AND FOR COMPLYING
+WITH ALL APPLICABLE LAWS REGARDING THE ACCESS AND RECOVERY OF DATA.
+
+================================================================================
+            Copyright (c) 2026 Devallix. All Rights Reserved.
+================================================================================

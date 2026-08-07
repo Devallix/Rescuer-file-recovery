@@ -49,7 +49,12 @@ class ScanWorker(QThread):
             mode = self._config.mode
             self._emit("scan_started", scan_id=self._scan_id, mode=mode)
             if mode == "quick":
-                files = run_quick_scan(self._config.source, self._config)
+                files = run_quick_scan(
+                    self._config.source,
+                    self._config,
+                    progress=self._quick_progress,
+                    cancel_flag=self._cancel,
+                )
             elif mode in ("deep", "signature"):
                 files = run_deep_scan(
                     self._config.source,
@@ -111,6 +116,14 @@ class ScanWorker(QThread):
     def _progress(self, scanned: int, total: int, found: int) -> None:
         fraction = scanned / total if total else 0.0
         self._signals.progress.emit(self._scan_id, fraction, "scanning")
+        self._signals.found.emit(self._scan_id, found)
+
+    def _quick_progress(self, walked: int, found: int) -> None:
+        self._signals.progress.emit(
+            self._scan_id,
+            0.0,
+            f"Scanning… {walked:,} filesystem entries",
+        )
         self._signals.found.emit(self._scan_id, found)
 
     def _recycle_progress(self, processed: int, total: int, found: int) -> None:

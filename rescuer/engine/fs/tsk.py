@@ -8,10 +8,14 @@ from rescuer.exceptions import DeviceAccessError, DeviceError
 log = logging.getLogger("rescuer.engine.fs")
 
 TSK_FS_NAME_FLAG_UNALLOC = 0x02
+TSK_FS_NAME_TYPE_UNDEF = 0x00
 TSK_FS_NAME_TYPE_DIR = 0x03
 TSK_FS_NAME_TYPE_REG = 0x05
 TSK_FS_NAME_TYPE_VIRT = 0x0A
 TSK_FS_NAME_TYPE_VIRT_DIR = 0x0B
+TSK_FS_META_FLAG_UNALLOC = 0x0002
+
+ORPHAN_DIR = "$OrphanFiles"
 
 _META_FILTER = {"$MBR", "$FAT1", "$FAT2", "$MFT", "$MFTMirr", "$LogFile",
                 "$Volume", "$AttrDef", "$Bitmap", "$Boot", "$BadClus",
@@ -52,22 +56,77 @@ class TskSource:
             ) from exc
 
     def walk(self) -> list[FsEntry]:
-        entries: list[FsEntry] = []
-        self._walk_dir("/", entries)
-        return entries
+        return list(self.iter_entries())
 
-    def _walk_dir(self, path: str, entries: list[FsEntry]) -> None:
+    def iter_entries(self, progress=None, cancel_flag: list[bool] | None = None):
+        seen: set[int] = set()
+        for entry in self._iter_dir("/", progress=progress, cancel_flag=cancel_flag):
+            if entry.inode >= 0:
+                seen.add(entry.inode)
+            yield entry
+        # Orphaned files whose parent directory was itself deleted are not
+        # reachable through the tree; TSK exposes them through the virtual
+        # $OrphanFiles directory (TSK_FS_ORPHANDIR_INUM == last_inum).
+        for entry in self.iter_orphans(progress=progress, cancel_flag=cancel_flag):
+            if entry.inode >= 0 and entry.inode in seen:
+                continue
+            if entry.inode >= 0:
+                seen.add(entry.inode)
+            yield entry
+
+    def iter_orphans(self, progress=None, cancel_flag: list[bool] | None = None):
+        if not self._supports_orphans(self.fs_type):
+            return
+        try:
+            directory = self.fs.open_dir(inode=self.fs.info.last_inum)
+        except (IOError, OSError, RuntimeError, TypeError):
+            try:
+                directory = self.fs.open_dir(None, self.fs.info.last_inum)
+            except (IOError, OSError, RuntimeError, TypeError):
+                return
+        for file_obj in directory:
+            if cancel_flag and cancel_flag[0]:
+                return
+            entry = self._convert(file_obj, "OrphanFiles")
+            if entry is None:
+                continue
+            if progress is not None:
+                progress()
+            yield entry
+
+    @staticmethod
+    def _supports_orphans(fs_type: str) -> bool:
+        """True when the filesystem exposes an orphan/inode scan.
+
+        TSK only reports unlinked-but-open files through the virtual
+        $OrphanFiles directory on NTFS and the EXT family; FAT, exFAT and
+        ISO images must go through raw carving instead.
+        """
+        try:
+            ftype = int(fs_type)
+        except (TypeError, ValueError):
+            return False
+        # TSK_FS_TYPE_NTFS=1, TSK_FS_TYPE_EXT2=128, EXT3=256, EXT4=8192
+        return bool(ftype & (1 | 128 | 256 | 8192))
+
+    def _iter_dir(self, path: str, progress=None, cancel_flag: list[bool] | None = None):
+        if cancel_flag and cancel_flag[0]:
+            return
         try:
             directory = self.fs.open_dir(path)
         except (IOError, OSError, RuntimeError):
             return
         for file_obj in directory:
+            if cancel_flag and cancel_flag[0]:
+                return
             entry = self._convert(file_obj, path)
             if entry is None:
                 continue
-            entries.append(entry)
+            if progress is not None:
+                progress()
+            yield entry
             if entry.is_dir and not entry.is_deleted:
-                self._walk_dir(entry.path, entries)
+                yield from self._iter_dir(entry.path, progress=progress, cancel_flag=cancel_flag)
 
     def _convert(self, file_obj, parent: str) -> FsEntry | None:
         info = file_obj.info
@@ -84,7 +143,7 @@ class TskSource:
         if name_info.type in (TSK_FS_NAME_TYPE_VIRT, TSK_FS_NAME_TYPE_VIRT_DIR):
             if name in _META_FILTER:
                 return None
-            if name in ("$OrphanFiles", "OrphanFiles", "$OrphanFiles/"):
+            if name in (ORPHAN_DIR, "OrphanFiles", ORPHAN_DIR + "/"):
                 pass
             elif name.startswith("$"):
                 return None
@@ -92,14 +151,34 @@ class TskSource:
         if name.startswith("$") and name in _META_FILTER:
             return None
 
-        is_dir = name_info.type == TSK_FS_NAME_TYPE_DIR
-        if not is_dir and name_info.type != TSK_FS_NAME_TYPE_REG:
-            return None
+        is_orphan = name_info.type == TSK_FS_NAME_TYPE_UNDEF
+
+        if not is_orphan:
+            is_dir = name_info.type == TSK_FS_NAME_TYPE_DIR
+            if not is_dir and name_info.type != TSK_FS_NAME_TYPE_REG:
+                return None
+
+        addr_hint = name_info.meta_addr if name_info.meta_addr else None
+
+        # TSK stores the name sequence of unallocated/orphan entries one
+        # less than the live MFT sequence, so tsk_fs_dir_get unloads the
+        # meta as a stale reference. Reload it directly from the inode so
+        # we keep the real size, timestamps and data address.
+        if meta is None and addr_hint is not None:
+            try:
+                meta_file = self.fs.open_meta(addr_hint)
+                if meta_file is not None and meta_file.info is not None:
+                    meta = meta_file.info.meta
+            except (IOError, OSError, RuntimeError):
+                meta = None
+
+        if is_orphan:
+            is_dir = bool(meta and meta.type == pytsk3.TSK_FS_META_TYPE_DIR)
 
         full_path = name if parent == "/" else f"{parent}/{name}"
         size = meta.size if meta else 0
-        is_deleted = bool(name_info.flags & TSK_FS_NAME_FLAG_UNALLOC)
-        addr = meta.addr if meta else -1
+        is_deleted = True if is_orphan else bool(name_info.flags & TSK_FS_NAME_FLAG_UNALLOC)
+        addr = meta.addr if meta else (addr_hint if addr_hint is not None else -1)
 
         entry = FsEntry(
             name=name,

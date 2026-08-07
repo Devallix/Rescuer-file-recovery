@@ -474,7 +474,10 @@ class WizardPage(Page):
         config = ScanConfig(
             mode=mode,
             source=self._source,
-            filters={"verify_hashes": self._verify_hash.isChecked()},
+            filters={
+                "verify_hashes": self._verify_hash.isChecked(),
+                "deleted_only": mode == "quick",
+            },
             workers=self._workers.value(),
         )
         self._scan_mode = mode
@@ -559,7 +562,7 @@ class WizardPage(Page):
         self._scan_label.setText("Cancelling…")
 
     def _on_scan_progress(self, _scan_id: int, fraction: float, phase: str) -> None:
-        if self._scan_mode == "recycle":
+        if self._scan_mode in ("quick", "recycle"):
             self._scan_progress.setRange(0, 0)
             if phase:
                 self._scan_label.setText(phase)
