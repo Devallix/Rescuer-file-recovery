@@ -1,0 +1,3040 @@
+{
+  "version": 1,
+  "categories": {
+    "documents": {
+      "label": "Documents",
+      "color": "#2E8CFF"
+    },
+    "photos": {
+      "label": "Photos",
+      "color": "#FFB020"
+    },
+    "videos": {
+      "label": "Videos",
+      "color": "#B06EFF"
+    },
+    "audio": {
+      "label": "Audio",
+      "color": "#2ECB85"
+    },
+    "archives": {
+      "label": "Archives",
+      "color": "#FF7AB8"
+    },
+    "databases": {
+      "label": "Databases",
+      "color": "#FF4D5E"
+    },
+    "cad": {
+      "label": "CAD",
+      "color": "#5CD0FF"
+    },
+    "design": {
+      "label": "Design",
+      "color": "#9BE564"
+    },
+    "vm": {
+      "label": "Virtual Machines",
+      "color": "#FF9F6B"
+    },
+    "source": {
+      "label": "Source Code",
+      "color": "#34E07B"
+    },
+    "email": {
+      "label": "Email",
+      "color": "#6B7BFF"
+    },
+    "executables": {
+      "label": "Executables",
+      "color": "#E0E6F2"
+    },
+    "other": {
+      "label": "Other",
+      "color": "#8A94A8"
+    }
+  },
+  "signatures": [
+    {
+      "id": "pdf",
+      "extensions": [
+        ".pdf"
+      ],
+      "mime": "application/pdf",
+      "category": "documents",
+      "label": "PDF document",
+      "preview": "pdf",
+      "headers": [
+        {
+          "bytes": "25504446",
+          "offset": 0
+        }
+      ],
+      "footer": {
+        "bytes": "2525454F46",
+        "max_gap": 262144
+      },
+      "min_size": 16,
+      "carve": true
+    },
+    {
+      "id": "ole2",
+      "extensions": [
+        ".doc",
+        ".xls",
+        ".ppt",
+        ".msg",
+        ".msi",
+        ".pub"
+      ],
+      "mime": "application/x-ole-storage",
+      "category": "documents",
+      "label": "OLE2 compound document",
+      "preview": "office",
+      "headers": [
+        {
+          "bytes": "D0CF11E0A1B11AE1",
+          "offset": 0
+        }
+      ],
+      "min_size": 512,
+      "carve": true
+    },
+    {
+      "id": "rtf",
+      "extensions": [
+        ".rtf"
+      ],
+      "mime": "application/rtf",
+      "category": "documents",
+      "label": "Rich Text Format",
+      "preview": "text",
+      "headers": [
+        {
+          "bytes": "7B5C727466",
+          "offset": 0
+        }
+      ],
+      "min_size": 8,
+      "carve": true
+    },
+    {
+      "id": "zip",
+      "extensions": [
+        ".zip",
+        ".docx",
+        ".xlsx",
+        ".pptx",
+        ".odt",
+        ".ods",
+        ".odp",
+        ".epub",
+        ".apk",
+        ".jar"
+      ],
+      "mime": "application/zip",
+      "category": "archives",
+      "label": "ZIP archive",
+      "preview": "archive",
+      "headers": [
+        {
+          "bytes": "504B0304",
+          "offset": 0
+        },
+        {
+          "bytes": "504B0506",
+          "offset": 0
+        }
+      ],
+      "footer": {
+        "bytes": "504B0506",
+        "max_gap": 262144
+      },
+      "min_size": 22,
+      "carve": true
+    },
+    {
+      "id": "zip_empty",
+      "extensions": [
+        ".zip"
+      ],
+      "mime": "application/zip",
+      "category": "archives",
+      "label": "Empty ZIP archive",
+      "preview": "archive",
+      "headers": [
+        {
+          "bytes": "504B0506",
+          "offset": 0
+        }
+      ],
+      "min_size": 22,
+      "carve": true
+    },
+    {
+      "id": "rar",
+      "extensions": [
+        ".rar"
+      ],
+      "mime": "application/vnd.rar",
+      "category": "archives",
+      "label": "RAR archive",
+      "preview": "archive",
+      "headers": [
+        {
+          "bytes": "526172211A0700",
+          "offset": 0
+        }
+      ],
+      "min_size": 16,
+      "carve": true
+    },
+    {
+      "id": "rar5",
+      "extensions": [
+        ".rar"
+      ],
+      "mime": "application/vnd.rar",
+      "category": "archives",
+      "label": "RAR 5 archive",
+      "preview": "archive",
+      "headers": [
+        {
+          "bytes": "526172211A070100",
+          "offset": 0
+        }
+      ],
+      "min_size": 16,
+      "carve": true
+    },
+    {
+      "id": "7z",
+      "extensions": [
+        ".7z"
+      ],
+      "mime": "application/x-7z-compressed",
+      "category": "archives",
+      "label": "7-Zip archive",
+      "preview": "archive",
+      "headers": [
+        {
+          "bytes": "377ABCAF271C",
+          "offset": 0
+        }
+      ],
+      "min_size": 32,
+      "carve": true
+    },
+    {
+      "id": "gzip",
+      "extensions": [
+        ".gz",
+        ".tgz"
+      ],
+      "mime": "application/gzip",
+      "category": "archives",
+      "label": "GZip archive",
+      "preview": "archive",
+      "headers": [
+        {
+          "bytes": "1F8B08",
+          "offset": 0
+        }
+      ],
+      "min_size": 20,
+      "carve": true
+    },
+    {
+      "id": "bzip2",
+      "extensions": [
+        ".bz2"
+      ],
+      "mime": "application/x-bzip2",
+      "category": "archives",
+      "label": "BZip2 archive",
+      "preview": "archive",
+      "headers": [
+        {
+          "bytes": "425A68",
+          "offset": 0
+        }
+      ],
+      "min_size": 20,
+      "carve": true
+    },
+    {
+      "id": "xz",
+      "extensions": [
+        ".xz"
+      ],
+      "mime": "application/x-xz",
+      "category": "archives",
+      "label": "XZ archive",
+      "preview": "archive",
+      "headers": [
+        {
+          "bytes": "FD377A585A00",
+          "offset": 0
+        }
+      ],
+      "min_size": 20,
+      "carve": true
+    },
+    {
+      "id": "tar",
+      "extensions": [
+        ".tar"
+      ],
+      "mime": "application/x-tar",
+      "category": "archives",
+      "label": "TAR archive",
+      "preview": "archive",
+      "headers": [
+        {
+          "bytes": "7573746172",
+          "offset": 257
+        }
+      ],
+      "min_size": 512,
+      "carve": true
+    },
+    {
+      "id": "iso",
+      "extensions": [
+        ".iso"
+      ],
+      "mime": "application/x-iso9660-image",
+      "category": "archives",
+      "label": "ISO image",
+      "preview": "archive",
+      "headers": [
+        {
+          "bytes": "4344303031",
+          "offset": 32769
+        }
+      ],
+      "min_size": 32768,
+      "carve": false
+    },
+    {
+      "id": "cab",
+      "extensions": [
+        ".cab"
+      ],
+      "mime": "application/vnd.ms-cab-compressed",
+      "category": "archives",
+      "label": "Cabinet archive",
+      "preview": "archive",
+      "headers": [
+        {
+          "bytes": "4D534346",
+          "offset": 0
+        }
+      ],
+      "min_size": 16,
+      "carve": true
+    },
+    {
+      "id": "zstd",
+      "extensions": [
+        ".zst"
+      ],
+      "mime": "application/zstd",
+      "category": "archives",
+      "label": "Zstandard archive",
+      "preview": "archive",
+      "headers": [
+        {
+          "bytes": "28B52FFD",
+          "offset": 0
+        }
+      ],
+      "min_size": 8,
+      "carve": true
+    },
+    {
+      "id": "jpeg",
+      "extensions": [
+        ".jpg",
+        ".jpeg",
+        ".jpe"
+      ],
+      "mime": "image/jpeg",
+      "category": "photos",
+      "label": "JPEG image",
+      "preview": "image",
+      "headers": [
+        {
+          "bytes": "FFD8FF",
+          "offset": 0
+        }
+      ],
+      "footer": {
+        "bytes": "FFD9",
+        "max_gap": 16777216
+      },
+      "min_size": 400,
+      "carve": true
+    },
+    {
+      "id": "png",
+      "extensions": [
+        ".png"
+      ],
+      "mime": "image/png",
+      "category": "photos",
+      "label": "PNG image",
+      "preview": "image",
+      "headers": [
+        {
+          "bytes": "89504E470D0A1A0A",
+          "offset": 0
+        }
+      ],
+      "footer": {
+        "bytes": "49454E44AE426082",
+        "max_gap": 67108864
+      },
+      "min_size": 67,
+      "carve": true
+    },
+    {
+      "id": "gif",
+      "extensions": [
+        ".gif"
+      ],
+      "mime": "image/gif",
+      "category": "photos",
+      "label": "GIF image",
+      "preview": "image",
+      "headers": [
+        {
+          "bytes": "474946383761",
+          "offset": 0
+        },
+        {
+          "bytes": "474946383961",
+          "offset": 0
+        }
+      ],
+      "footer": {
+        "bytes": "3B",
+        "max_gap": 67108864
+      },
+      "min_size": 43,
+      "carve": true
+    },
+    {
+      "id": "bmp",
+      "extensions": [
+        ".bmp",
+        ".dib"
+      ],
+      "mime": "image/bmp",
+      "category": "photos",
+      "label": "BMP image",
+      "preview": "image",
+      "headers": [
+        {
+          "bytes": "424D",
+          "offset": 0
+        }
+      ],
+      "min_size": 54,
+      "carve": true
+    },
+    {
+      "id": "tiff",
+      "extensions": [
+        ".tif",
+        ".tiff"
+      ],
+      "mime": "image/tiff",
+      "category": "photos",
+      "label": "TIFF image",
+      "preview": "image",
+      "headers": [
+        {
+          "bytes": "49492A00",
+          "offset": 0
+        },
+        {
+          "bytes": "4D4D002A",
+          "offset": 0
+        }
+      ],
+      "min_size": 8,
+      "carve": true
+    },
+    {
+      "id": "webp",
+      "extensions": [
+        ".webp"
+      ],
+      "mime": "image/webp",
+      "category": "photos",
+      "label": "WebP image",
+      "preview": "image",
+      "headers": [
+        {
+          "bytes": "52494646",
+          "offset": 0
+        },
+        {
+          "bytes": "57454250",
+          "offset": 8
+        }
+      ],
+      "min_size": 20,
+      "carve": true
+    },
+    {
+      "id": "heic",
+      "extensions": [
+        ".heic",
+        ".heif"
+      ],
+      "mime": "image/heic",
+      "category": "photos",
+      "label": "HEIC image",
+      "preview": "image",
+      "headers": [
+        {
+          "bytes": "66747970",
+          "offset": 4
+        },
+        {
+          "bytes": "68656963",
+          "offset": 8
+        }
+      ],
+      "min_size": 32,
+      "carve": true
+    },
+    {
+      "id": "avif",
+      "extensions": [
+        ".avif"
+      ],
+      "mime": "image/avif",
+      "category": "photos",
+      "label": "AVIF image",
+      "preview": "image",
+      "headers": [
+        {
+          "bytes": "66747970",
+          "offset": 4
+        },
+        {
+          "bytes": "61766966",
+          "offset": 8
+        }
+      ],
+      "min_size": 32,
+      "carve": true
+    },
+    {
+      "id": "svg",
+      "extensions": [
+        ".svg"
+      ],
+      "mime": "image/svg+xml",
+      "category": "design",
+      "label": "SVG vector image",
+      "preview": "image",
+      "headers": [
+        {
+          "bytes": "3C3F786D6C",
+          "offset": 0
+        },
+        {
+          "bytes": "3C737667",
+          "offset": 0
+        }
+      ],
+      "min_size": 60,
+      "carve": true
+    },
+    {
+      "id": "ico",
+      "extensions": [
+        ".ico",
+        ".cur"
+      ],
+      "mime": "image/x-icon",
+      "category": "design",
+      "label": "Icon image",
+      "preview": "image",
+      "headers": [
+        {
+          "bytes": "00000100",
+          "offset": 0
+        },
+        {
+          "bytes": "00000200",
+          "offset": 0
+        }
+      ],
+      "min_size": 22,
+      "carve": true
+    },
+    {
+      "id": "psd",
+      "extensions": [
+        ".psd"
+      ],
+      "mime": "image/vnd.adobe.photoshop",
+      "category": "design",
+      "label": "Photoshop document",
+      "preview": "image",
+      "headers": [
+        {
+          "bytes": "38425053",
+          "offset": 0
+        }
+      ],
+      "min_size": 8,
+      "carve": true
+    },
+    {
+      "id": "cr2",
+      "extensions": [
+        ".cr2"
+      ],
+      "mime": "image/x-canon-cr2",
+      "category": "photos",
+      "label": "Canon RAW image",
+      "preview": "image",
+      "headers": [
+        {
+          "bytes": "49492A0000000000435232",
+          "offset": 0
+        }
+      ],
+      "min_size": 16,
+      "carve": true
+    },
+    {
+      "id": "nef",
+      "extensions": [
+        ".nef"
+      ],
+      "mime": "image/x-nikon-nef",
+      "category": "photos",
+      "label": "Nikon RAW image",
+      "preview": "image",
+      "headers": [
+        {
+          "bytes": "49492A00",
+          "offset": 0
+        },
+        {
+          "bytes": "4D4D002A",
+          "offset": 0
+        }
+      ],
+      "min_size": 16,
+      "carve": true
+    },
+    {
+      "id": "arw",
+      "extensions": [
+        ".arw"
+      ],
+      "mime": "image/x-sony-arw",
+      "category": "photos",
+      "label": "Sony RAW image",
+      "preview": "image",
+      "headers": [
+        {
+          "bytes": "49492A0008000000",
+          "offset": 0
+        }
+      ],
+      "min_size": 16,
+      "carve": true
+    },
+    {
+      "id": "dng",
+      "extensions": [
+        ".dng"
+      ],
+      "mime": "image/x-adobe-dng",
+      "category": "photos",
+      "label": "Adobe DNG RAW image",
+      "preview": "image",
+      "headers": [
+        {
+          "bytes": "49492A0008000000",
+          "offset": 0
+        },
+        {
+          "bytes": "4D4D002A00000008",
+          "offset": 0
+        }
+      ],
+      "min_size": 16,
+      "carve": true
+    },
+    {
+      "id": "tga",
+      "extensions": [
+        ".tga"
+      ],
+      "mime": "image/x-tga",
+      "category": "photos",
+      "label": "TGA image",
+      "preview": "image",
+      "headers": [
+        {
+          "bytes": "000100",
+          "offset": 0
+        }
+      ],
+      "min_size": 18,
+      "carve": true
+    },
+    {
+      "id": "ps",
+      "extensions": [
+        ".ps",
+        ".eps",
+        ".ai"
+      ],
+      "mime": "application/postscript",
+      "category": "design",
+      "label": "PostScript document",
+      "preview": "text",
+      "headers": [
+        {
+          "bytes": "252150532D41646F6265",
+          "offset": 0
+        }
+      ],
+      "min_size": 8,
+      "carve": true
+    },
+    {
+      "id": "mp4",
+      "extensions": [
+        ".mp4",
+        ".m4v",
+        ".m4a"
+      ],
+      "mime": "video/mp4",
+      "category": "videos",
+      "label": "MP4 media",
+      "preview": "video",
+      "headers": [
+        {
+          "bytes": "0000001866747970",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": true
+    },
+    {
+      "id": "mov",
+      "extensions": [
+        ".mov",
+        ".qt"
+      ],
+      "mime": "video/quicktime",
+      "category": "videos",
+      "label": "QuickTime movie",
+      "preview": "video",
+      "headers": [
+        {
+          "bytes": "00000014667479707174",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": true
+    },
+    {
+      "id": "mp4b",
+      "extensions": [
+        ".mp4",
+        ".m4v"
+      ],
+      "mime": "video/mp4",
+      "category": "videos",
+      "label": "MP4 media (isom)",
+      "preview": "video",
+      "headers": [
+        {
+          "bytes": "6674797069736F6D",
+          "offset": 4
+        }
+      ],
+      "min_size": 64,
+      "carve": true
+    },
+    {
+      "id": "avi",
+      "extensions": [
+        ".avi"
+      ],
+      "mime": "video/x-msvideo",
+      "category": "videos",
+      "label": "AVI video",
+      "preview": "video",
+      "headers": [
+        {
+          "bytes": "52494646",
+          "offset": 0
+        },
+        {
+          "bytes": "41564920",
+          "offset": 8
+        }
+      ],
+      "min_size": 64,
+      "carve": true
+    },
+    {
+      "id": "mkv",
+      "extensions": [
+        ".mkv",
+        ".webm"
+      ],
+      "mime": "video/x-matroska",
+      "category": "videos",
+      "label": "Matroska video",
+      "preview": "video",
+      "headers": [
+        {
+          "bytes": "1A45DFA3",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": true
+    },
+    {
+      "id": "flv",
+      "extensions": [
+        ".flv"
+      ],
+      "mime": "video/x-flv",
+      "category": "videos",
+      "label": "Flash video",
+      "preview": "video",
+      "headers": [
+        {
+          "bytes": "464C5601",
+          "offset": 0
+        }
+      ],
+      "min_size": 32,
+      "carve": true
+    },
+    {
+      "id": "asf",
+      "extensions": [
+        ".wmv",
+        ".wma",
+        ".asf"
+      ],
+      "mime": "video/x-ms-asf",
+      "category": "videos",
+      "label": "Windows Media",
+      "preview": "video",
+      "headers": [
+        {
+          "bytes": "3026B2758E66CF11A6D900AA0062CE6C",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": true
+    },
+    {
+      "id": "mpeg",
+      "extensions": [
+        ".mpg",
+        ".mpeg"
+      ],
+      "mime": "video/mpeg",
+      "category": "videos",
+      "label": "MPEG video",
+      "preview": "video",
+      "headers": [
+        {
+          "bytes": "000001BA",
+          "offset": 0
+        },
+        {
+          "bytes": "000001B3",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": true
+    },
+    {
+      "id": "m2ts",
+      "extensions": [
+        ".m2ts",
+        ".ts"
+      ],
+      "mime": "video/mp2t",
+      "category": "videos",
+      "label": "MPEG transport stream",
+      "preview": "video",
+      "headers": [
+        {
+          "bytes": "474000",
+          "offset": 0
+        }
+      ],
+      "min_size": 188,
+      "carve": false
+    },
+    {
+      "id": "3gp",
+      "extensions": [
+        ".3gp",
+        ".3g2"
+      ],
+      "mime": "video/3gpp",
+      "category": "videos",
+      "label": "3GPP media",
+      "preview": "video",
+      "headers": [
+        {
+          "bytes": "667479703367",
+          "offset": 4
+        },
+        {
+          "bytes": "66747970336732",
+          "offset": 4
+        }
+      ],
+      "min_size": 64,
+      "carve": true
+    },
+    {
+      "id": "mp3",
+      "extensions": [
+        ".mp3"
+      ],
+      "mime": "audio/mpeg",
+      "category": "audio",
+      "label": "MP3 audio",
+      "preview": "audio",
+      "headers": [
+        {
+          "bytes": "494433",
+          "offset": 0
+        },
+        {
+          "bytes": "FFF3",
+          "offset": 0
+        },
+        {
+          "bytes": "FFF2",
+          "offset": 0
+        },
+        {
+          "bytes": "FFFB",
+          "offset": 0
+        }
+      ],
+      "min_size": 128,
+      "carve": true
+    },
+    {
+      "id": "wav",
+      "extensions": [
+        ".wav"
+      ],
+      "mime": "audio/wav",
+      "category": "audio",
+      "label": "WAV audio",
+      "preview": "audio",
+      "headers": [
+        {
+          "bytes": "52494646",
+          "offset": 0
+        },
+        {
+          "bytes": "57415645",
+          "offset": 8
+        }
+      ],
+      "min_size": 44,
+      "carve": true
+    },
+    {
+      "id": "flac",
+      "extensions": [
+        ".flac"
+      ],
+      "mime": "audio/flac",
+      "category": "audio",
+      "label": "FLAC audio",
+      "preview": "audio",
+      "headers": [
+        {
+          "bytes": "664C6143",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": true
+    },
+    {
+      "id": "ogg",
+      "extensions": [
+        ".ogg",
+        ".oga"
+      ],
+      "mime": "audio/ogg",
+      "category": "audio",
+      "label": "OGG audio",
+      "preview": "audio",
+      "headers": [
+        {
+          "bytes": "4F676753",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": true
+    },
+    {
+      "id": "opus",
+      "extensions": [
+        ".opus"
+      ],
+      "mime": "audio/opus",
+      "category": "audio",
+      "label": "Opus audio",
+      "preview": "audio",
+      "headers": [
+        {
+          "bytes": "4F70757348656164",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": true
+    },
+    {
+      "id": "aac",
+      "extensions": [
+        ".aac"
+      ],
+      "mime": "audio/aac",
+      "category": "audio",
+      "label": "AAC audio",
+      "preview": "audio",
+      "headers": [
+        {
+          "bytes": "FFF1",
+          "offset": 0
+        },
+        {
+          "bytes": "FFF9",
+          "offset": 0
+        }
+      ],
+      "min_size": 32,
+      "carve": true
+    },
+    {
+      "id": "m4a",
+      "extensions": [
+        ".m4a"
+      ],
+      "mime": "audio/mp4",
+      "category": "audio",
+      "label": "M4A audio",
+      "preview": "audio",
+      "headers": [
+        {
+          "bytes": "00000018667479704D3441",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": true
+    },
+    {
+      "id": "amr",
+      "extensions": [
+        ".amr"
+      ],
+      "mime": "audio/amr",
+      "category": "audio",
+      "label": "AMR audio",
+      "preview": "audio",
+      "headers": [
+        {
+          "bytes": "2321414D52",
+          "offset": 0
+        }
+      ],
+      "min_size": 32,
+      "carve": true
+    },
+    {
+      "id": "midi",
+      "extensions": [
+        ".mid",
+        ".midi"
+      ],
+      "mime": "audio/midi",
+      "category": "audio",
+      "label": "MIDI sequence",
+      "preview": "audio",
+      "headers": [
+        {
+          "bytes": "4D546864",
+          "offset": 0
+        }
+      ],
+      "min_size": 14,
+      "carve": true
+    },
+    {
+      "id": "sqlite",
+      "extensions": [
+        ".sqlite",
+        ".db",
+        ".sqlite3"
+      ],
+      "mime": "application/x-sqlite3",
+      "category": "databases",
+      "label": "SQLite database",
+      "preview": "database",
+      "headers": [
+        {
+          "bytes": "53514C69746520666F726D6174203300",
+          "offset": 0
+        }
+      ],
+      "min_size": 100,
+      "carve": true
+    },
+    {
+      "id": "dbf",
+      "extensions": [
+        ".dbf"
+      ],
+      "mime": "application/x-dbf",
+      "category": "databases",
+      "label": "dBASE database",
+      "preview": "database",
+      "headers": [
+        {
+          "bytes": "0301",
+          "offset": 0
+        },
+        {
+          "bytes": "0302",
+          "offset": 0
+        },
+        {
+          "bytes": "8301",
+          "offset": 0
+        }
+      ],
+      "min_size": 32,
+      "carve": true
+    },
+    {
+      "id": "access",
+      "extensions": [
+        ".mdb",
+        ".accdb"
+      ],
+      "mime": "application/x-msaccess",
+      "category": "databases",
+      "label": "Access database",
+      "preview": "database",
+      "headers": [
+        {
+          "bytes": "000100005374616E64617264204A6574",
+          "offset": 4
+        }
+      ],
+      "min_size": 512,
+      "carve": true
+    },
+    {
+      "id": "berkeley",
+      "extensions": [
+        ".db"
+      ],
+      "mime": "application/octet-stream",
+      "category": "databases",
+      "label": "Berkeley DB",
+      "preview": "database",
+      "headers": [
+        {
+          "bytes": "00061561",
+          "offset": 0
+        },
+        {
+          "bytes": "00061562",
+          "offset": 0
+        }
+      ],
+      "min_size": 16,
+      "carve": true
+    },
+    {
+      "id": "mbox",
+      "extensions": [
+        ".mbox"
+      ],
+      "mime": "application/mbox",
+      "category": "email",
+      "label": "MBOX mailbox",
+      "preview": "text",
+      "headers": [
+        {
+          "bytes": "46726F6D20",
+          "offset": 0
+        }
+      ],
+      "min_size": 128,
+      "carve": false
+    },
+    {
+      "id": "pst",
+      "extensions": [
+        ".pst",
+        ".ost"
+      ],
+      "mime": "application/vnd.ms-outlook",
+      "category": "email",
+      "label": "Outlook store",
+      "preview": "email",
+      "headers": [
+        {
+          "bytes": "2142444E",
+          "offset": 0
+        }
+      ],
+      "min_size": 512,
+      "carve": true
+    },
+    {
+      "id": "dwg",
+      "extensions": [
+        ".dwg"
+      ],
+      "mime": "application/acad",
+      "category": "cad",
+      "label": "AutoCAD drawing",
+      "preview": "cad",
+      "headers": [
+        {
+          "bytes": "414331",
+          "offset": 0
+        },
+        {
+          "bytes": "414330",
+          "offset": 0
+        }
+      ],
+      "min_size": 128,
+      "carve": true
+    },
+    {
+      "id": "dxf",
+      "extensions": [
+        ".dxf"
+      ],
+      "mime": "application/dxf",
+      "category": "cad",
+      "label": "AutoCAD DXF",
+      "preview": "text",
+      "headers": [
+        {
+          "bytes": "4143543A",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": true
+    },
+    {
+      "id": "skp",
+      "extensions": [
+        ".skp"
+      ],
+      "mime": "application/octet-stream",
+      "category": "cad",
+      "label": "SketchUp model",
+      "preview": "cad",
+      "headers": [
+        {
+          "bytes": "8B000000",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": true
+    },
+    {
+      "id": "vdi",
+      "extensions": [
+        ".vdi"
+      ],
+      "mime": "application/x-vdi",
+      "category": "vm",
+      "label": "VirtualBox disk image",
+      "preview": "vm",
+      "headers": [
+        {
+          "bytes": "31323334",
+          "offset": 64
+        },
+        {
+          "bytes": "3C3F786D6C20",
+          "offset": 0
+        }
+      ],
+      "min_size": 512,
+      "carve": false
+    },
+    {
+      "id": "vmdk",
+      "extensions": [
+        ".vmdk"
+      ],
+      "mime": "application/x-vmdk",
+      "category": "vm",
+      "label": "VMware disk",
+      "preview": "vm",
+      "headers": [
+        {
+          "bytes": "4B444D56",
+          "offset": 0
+        }
+      ],
+      "min_size": 512,
+      "carve": false
+    },
+    {
+      "id": "vhd",
+      "extensions": [
+        ".vhd"
+      ],
+      "mime": "application/x-vhd",
+      "category": "vm",
+      "label": "Virtual hard disk",
+      "preview": "vm",
+      "headers": [
+        {
+          "bytes": "636F6E6563746978",
+          "offset": 0
+        }
+      ],
+      "min_size": 512,
+      "carve": false
+    },
+    {
+      "id": "vhdx",
+      "extensions": [
+        ".vhdx"
+      ],
+      "mime": "application/x-vhdx",
+      "category": "vm",
+      "label": "Virtual hard disk v2",
+      "preview": "vm",
+      "headers": [
+        {
+          "bytes": "76687378",
+          "offset": 0
+        }
+      ],
+      "min_size": 512,
+      "carve": false
+    },
+    {
+      "id": "qcow",
+      "extensions": [
+        ".qcow",
+        ".qcow2"
+      ],
+      "mime": "application/x-qcow",
+      "category": "vm",
+      "label": "QEMU disk",
+      "preview": "vm",
+      "headers": [
+        {
+          "bytes": "514649FB",
+          "offset": 0
+        }
+      ],
+      "min_size": 512,
+      "carve": false
+    },
+    {
+      "id": "exe",
+      "extensions": [
+        ".exe",
+        ".dll",
+        ".sys",
+        ".scr",
+        ".bin"
+      ],
+      "mime": "application/x-msdownload",
+      "category": "executables",
+      "label": "Windows executable",
+      "preview": "binary",
+      "headers": [
+        {
+          "bytes": "4D5A",
+          "offset": 0
+        }
+      ],
+      "min_size": 1024,
+      "carve": false
+    },
+    {
+      "id": "elf",
+      "extensions": [
+        ".elf",
+        ".so"
+      ],
+      "mime": "application/x-elf",
+      "category": "executables",
+      "label": "ELF binary",
+      "preview": "binary",
+      "headers": [
+        {
+          "bytes": "7F454C46",
+          "offset": 0
+        }
+      ],
+      "min_size": 1024,
+      "carve": false
+    },
+    {
+      "id": "pe",
+      "extensions": [
+        ".exe",
+        ".dll"
+      ],
+      "mime": "application/x-msdownload",
+      "category": "executables",
+      "label": "PE binary",
+      "preview": "binary",
+      "headers": [
+        {
+          "bytes": "50450000",
+          "offset": 0
+        }
+      ],
+      "min_size": 1024,
+      "carve": false
+    },
+    {
+      "id": "wasm",
+      "extensions": [
+        ".wasm"
+      ],
+      "mime": "application/wasm",
+      "category": "executables",
+      "label": "WebAssembly module",
+      "preview": "binary",
+      "headers": [
+        {
+          "bytes": "0061736D",
+          "offset": 0
+        }
+      ],
+      "min_size": 8,
+      "carve": true
+    },
+    {
+      "id": "mobi",
+      "extensions": [
+        ".mobi",
+        ".azw"
+      ],
+      "mime": "application/x-mobipocket-ebook",
+      "category": "documents",
+      "label": "Mobipocket ebook",
+      "preview": "text",
+      "headers": [
+        {
+          "bytes": "424F4F4B4D4F4249",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": true
+    },
+    {
+      "id": "fb2",
+      "extensions": [
+        ".fb2"
+      ],
+      "mime": "application/x-fictionbook+xml",
+      "category": "documents",
+      "label": "FictionBook ebook",
+      "preview": "text",
+      "headers": [
+        {
+          "bytes": "3C3F786D6C2076657273696F6E",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": true
+    },
+    {
+      "id": "ics",
+      "extensions": [
+        ".ics"
+      ],
+      "mime": "text/calendar",
+      "category": "documents",
+      "label": "iCalendar file",
+      "preview": "text",
+      "headers": [
+        {
+          "bytes": "424547494E3A5643414C414C454E444152",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": false
+    },
+    {
+      "id": "vcf",
+      "extensions": [
+        ".vcf"
+      ],
+      "mime": "text/vcard",
+      "category": "documents",
+      "label": "vCard contact",
+      "preview": "text",
+      "headers": [
+        {
+          "bytes": "424547494E3A5643415244",
+          "offset": 0
+        }
+      ],
+      "min_size": 32,
+      "carve": false
+    },
+    {
+      "id": "chm",
+      "extensions": [
+        ".chm",
+        ".hlp"
+      ],
+      "mime": "application/x-chm",
+      "category": "documents",
+      "label": "Compiled HTML help",
+      "preview": "text",
+      "headers": [
+        {
+          "bytes": "4954534600000000",
+          "offset": 0
+        }
+      ],
+      "min_size": 512,
+      "carve": true
+    },
+    {
+      "id": "epub",
+      "extensions": [
+        ".epub"
+      ],
+      "mime": "application/epub+zip",
+      "category": "documents",
+      "label": "EPUB ebook",
+      "preview": "archive",
+      "headers": [
+        {
+          "bytes": "504B0304",
+          "offset": 0
+        }
+      ],
+      "footer": {
+        "bytes": "504B0506",
+        "max_gap": 262144
+      },
+      "min_size": 64,
+      "carve": true
+    },
+    {
+      "id": "xps",
+      "extensions": [
+        ".xps"
+      ],
+      "mime": "application/vnd.ms-xpsdocument",
+      "category": "documents",
+      "label": "XPS document",
+      "preview": "archive",
+      "headers": [
+        {
+          "bytes": "504B0304",
+          "offset": 0
+        }
+      ],
+      "footer": {
+        "bytes": "504B0506",
+        "max_gap": 262144
+      },
+      "min_size": 64,
+      "carve": true
+    },
+    {
+      "id": "wps",
+      "extensions": [
+        ".wps"
+      ],
+      "mime": "application/vnd.ms-works",
+      "category": "documents",
+      "label": "Microsoft Works",
+      "preview": "office",
+      "headers": [
+        {
+          "bytes": "D0CF11E0A1B11AE1",
+          "offset": 0
+        }
+      ],
+      "min_size": 512,
+      "carve": true
+    },
+    {
+      "id": "jp2",
+      "extensions": [
+        ".jp2",
+        ".jpx",
+        ".jpm"
+      ],
+      "mime": "image/jp2",
+      "category": "photos",
+      "label": "JPEG 2000",
+      "preview": "image",
+      "headers": [
+        {
+          "bytes": "6A5020200D0A870A",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": true
+    },
+    {
+      "id": "pcx",
+      "extensions": [
+        ".pcx"
+      ],
+      "mime": "image/x-pcx",
+      "category": "photos",
+      "label": "PCX image",
+      "preview": "image",
+      "headers": [
+        {
+          "bytes": "0A",
+          "offset": 0
+        }
+      ],
+      "min_size": 128,
+      "carve": true
+    },
+    {
+      "id": "ppm",
+      "extensions": [
+        ".ppm"
+      ],
+      "mime": "image/x-portable-pixmap",
+      "category": "photos",
+      "label": "PPM image",
+      "preview": "image",
+      "headers": [
+        {
+          "bytes": "5036",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": false
+    },
+    {
+      "id": "pgm",
+      "extensions": [
+        ".pgm"
+      ],
+      "mime": "image/x-portable-graymap",
+      "category": "photos",
+      "label": "PGM image",
+      "preview": "image",
+      "headers": [
+        {
+          "bytes": "5032",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": false
+    },
+    {
+      "id": "pbm",
+      "extensions": [
+        ".pbm"
+      ],
+      "mime": "image/x-portable-bitmap",
+      "category": "photos",
+      "label": "PBM image",
+      "preview": "image",
+      "headers": [
+        {
+          "bytes": "5031",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": false
+    },
+    {
+      "id": "xpm",
+      "extensions": [
+        ".xpm"
+      ],
+      "mime": "image/x-xpixmap",
+      "category": "photos",
+      "label": "XPM image",
+      "preview": "text",
+      "headers": [
+        {
+          "bytes": "2F2A2053504D20",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": false
+    },
+    {
+      "id": "ras",
+      "extensions": [
+        ".ras"
+      ],
+      "mime": "image/x-cmu-raster",
+      "category": "photos",
+      "label": "Sun Raster",
+      "preview": "image",
+      "headers": [
+        {
+          "bytes": "59A6",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": true
+    },
+    {
+      "id": "cin",
+      "extensions": [
+        ".cin"
+      ],
+      "mime": "image/x-cineon",
+      "category": "photos",
+      "label": "Kodak Cineon",
+      "preview": "image",
+      "headers": [
+        {
+          "bytes": "802A",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": true
+    },
+    {
+      "id": "dpx",
+      "extensions": [
+        ".dpx"
+      ],
+      "mime": "image/x-dpx",
+      "category": "photos",
+      "label": "DPX image",
+      "preview": "image",
+      "headers": [
+        {
+          "bytes": "53445058",
+          "offset": 0
+        },
+        {
+          "bytes": "58504453",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": true
+    },
+    {
+      "id": "ape",
+      "extensions": [
+        ".ape"
+      ],
+      "mime": "audio/ape",
+      "category": "audio",
+      "label": "Monkey's Audio",
+      "preview": "audio",
+      "headers": [
+        {
+          "bytes": "4D414320",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": true
+    },
+    {
+      "id": "wv",
+      "extensions": [
+        ".wv"
+      ],
+      "mime": "audio/x-wavpack",
+      "category": "audio",
+      "label": "WavPack audio",
+      "preview": "audio",
+      "headers": [
+        {
+          "bytes": "7776706B",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": true
+    },
+    {
+      "id": "wma",
+      "extensions": [
+        ".wma"
+      ],
+      "mime": "audio/x-ms-wma",
+      "category": "audio",
+      "label": "Windows Media Audio",
+      "preview": "audio",
+      "headers": [
+        {
+          "bytes": "3026B2758E66CF11A6D900AA0062CE6C",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": true
+    },
+    {
+      "id": "mka",
+      "extensions": [
+        ".mka"
+      ],
+      "mime": "audio/x-matroska",
+      "category": "audio",
+      "label": "Matroska audio",
+      "preview": "audio",
+      "headers": [
+        {
+          "bytes": "1A45DFA3",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": true
+    },
+    {
+      "id": "wmv",
+      "extensions": [
+        ".wmv"
+      ],
+      "mime": "video/x-ms-wmv",
+      "category": "videos",
+      "label": "Windows Media Video",
+      "preview": "video",
+      "headers": [
+        {
+          "bytes": "3026B2758E66CF11A6D900AA0062CE6C",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": true
+    },
+    {
+      "id": "webm",
+      "extensions": [
+        ".webm"
+      ],
+      "mime": "video/webm",
+      "category": "videos",
+      "label": "WebM video",
+      "preview": "video",
+      "headers": [
+        {
+          "bytes": "1A45DFA3",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": true
+    },
+    {
+      "id": "ogv",
+      "extensions": [
+        ".ogv"
+      ],
+      "mime": "video/ogg",
+      "category": "videos",
+      "label": "OGG video",
+      "preview": "video",
+      "headers": [
+        {
+          "bytes": "4F676753",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": true
+    },
+    {
+      "id": "eml",
+      "extensions": [
+        ".eml"
+      ],
+      "mime": "message/rfc822",
+      "category": "email",
+      "label": "Email message",
+      "preview": "text",
+      "headers": [
+        {
+          "bytes": "52657475726E2D506174683A",
+          "offset": 0
+        },
+        {
+          "bytes": "46726F6D20",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": false
+    },
+    {
+      "id": "msg",
+      "extensions": [
+        ".msg"
+      ],
+      "mime": "application/vnd.ms-outlook",
+      "category": "email",
+      "label": "Outlook message",
+      "preview": "email",
+      "headers": [
+        {
+          "bytes": "D0CF11E0A1B11AE1",
+          "offset": 0
+        }
+      ],
+      "min_size": 512,
+      "carve": true
+    },
+    {
+      "id": "arj",
+      "extensions": [
+        ".arj"
+      ],
+      "mime": "application/x-arj",
+      "category": "archives",
+      "label": "ARJ archive",
+      "preview": "archive",
+      "headers": [
+        {
+          "bytes": "60EA",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": true
+    },
+    {
+      "id": "lzh",
+      "extensions": [
+        ".lzh",
+        ".lha"
+      ],
+      "mime": "application/x-lzh-compressed",
+      "category": "archives",
+      "label": "LZH archive",
+      "preview": "archive",
+      "headers": [
+        {
+          "bytes": "2D6C68302D",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": true
+    },
+    {
+      "id": "zoo",
+      "extensions": [
+        ".zoo"
+      ],
+      "mime": "application/x-zoo",
+      "category": "archives",
+      "label": "ZOO archive",
+      "preview": "archive",
+      "headers": [
+        {
+          "bytes": "5A4F4F",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": true
+    },
+    {
+      "id": "step",
+      "extensions": [
+        ".step",
+        ".stp",
+        ".stpz"
+      ],
+      "mime": "application/step",
+      "category": "cad",
+      "label": "STEP CAD",
+      "preview": "text",
+      "headers": [
+        {
+          "bytes": "49534F2D31303A",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": false
+    },
+    {
+      "id": "iges",
+      "extensions": [
+        ".iges",
+        ".igs"
+      ],
+      "mime": "application/iges",
+      "category": "cad",
+      "label": "IGES CAD",
+      "preview": "text",
+      "headers": [
+        {
+          "bytes": "494745532D",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": false
+    },
+    {
+      "id": "qcow2",
+      "extensions": [
+        ".qcow2"
+      ],
+      "mime": "application/x-qcow2",
+      "category": "vm",
+      "label": "QEMU QCOW2 disk",
+      "preview": "vm",
+      "headers": [
+        {
+          "bytes": "514649FB",
+          "offset": 0
+        }
+      ],
+      "min_size": 512,
+      "carve": false
+    },
+    {
+      "id": "py",
+      "extensions": [
+        ".py"
+      ],
+      "mime": "text/x-python",
+      "category": "source",
+      "label": "Python source",
+      "preview": "text",
+      "headers": [
+        {
+          "bytes": "7072696E742820",
+          "offset": 0
+        },
+        {
+          "bytes": "2321",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": false
+    },
+    {
+      "id": "js",
+      "extensions": [
+        ".js",
+        ".mjs"
+      ],
+      "mime": "application/javascript",
+      "category": "source",
+      "label": "JavaScript source",
+      "preview": "text",
+      "headers": [
+        {
+          "bytes": "66756E6374696F6E",
+          "offset": 0
+        },
+        {
+          "bytes": "696D706F727420",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": false
+    },
+    {
+      "id": "java",
+      "extensions": [
+        ".java",
+        ".class"
+      ],
+      "mime": "text/x-java",
+      "category": "source",
+      "label": "Java source",
+      "preview": "text",
+      "headers": [
+        {
+          "bytes": "7061636B61676520",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": false
+    },
+    {
+      "id": "html",
+      "extensions": [
+        ".html",
+        ".htm"
+      ],
+      "mime": "text/html",
+      "category": "source",
+      "label": "HTML document",
+      "preview": "text",
+      "headers": [
+        {
+          "bytes": "3C48746D6C",
+          "offset": 0
+        },
+        {
+          "bytes": "3C484544",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": false
+    },
+    {
+      "id": "css",
+      "extensions": [
+        ".css"
+      ],
+      "mime": "text/css",
+      "category": "source",
+      "label": "CSS stylesheet",
+      "preview": "text",
+      "headers": [
+        {
+          "bytes": "2D2D2D2D2D2D2D",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": false
+    },
+    {
+      "id": "sql",
+      "extensions": [
+        ".sql"
+      ],
+      "mime": "application/sql",
+      "category": "source",
+      "label": "SQL script",
+      "preview": "text",
+      "headers": [
+        {
+          "bytes": "53454C454354",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": false
+    },
+    {
+      "id": "sh",
+      "extensions": [
+        ".sh",
+        ".bash"
+      ],
+      "mime": "application/x-sh",
+      "category": "source",
+      "label": "Shell script",
+      "preview": "text",
+      "headers": [
+        {
+          "bytes": "2321",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": false
+    },
+    {
+      "id": "bat",
+      "extensions": [
+        ".bat",
+        ".cmd"
+      ],
+      "mime": "application/x-bat",
+      "category": "source",
+      "label": "Batch script",
+      "preview": "text",
+      "headers": [
+        {
+          "bytes": "40006400650063006D0020",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": false
+    },
+    {
+      "id": "ps1",
+      "extensions": [
+        ".ps1"
+      ],
+      "mime": "application/x-powershell",
+      "category": "source",
+      "label": "PowerShell script",
+      "preview": "text",
+      "headers": [
+        {
+          "bytes": "504F5745525348454C4C",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": false
+    },
+    {
+      "id": "xml",
+      "extensions": [
+        ".xml"
+      ],
+      "mime": "application/xml",
+      "category": "source",
+      "label": "XML document",
+      "preview": "text",
+      "headers": [
+        {
+          "bytes": "3C3F786D6C",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": false
+    },
+    {
+      "id": "json",
+      "extensions": [
+        ".json"
+      ],
+      "mime": "application/json",
+      "category": "source",
+      "label": "JSON document",
+      "preview": "text",
+      "headers": [
+        {
+          "bytes": "7B",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": false
+    },
+    {
+      "id": "yaml",
+      "extensions": [
+        ".yaml",
+        ".yml"
+      ],
+      "mime": "application/x-yaml",
+      "category": "source",
+      "label": "YAML document",
+      "preview": "text",
+      "headers": [
+        {
+          "bytes": "2D2D2D",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": false
+    },
+    {
+      "id": "ini",
+      "extensions": [
+        ".ini",
+        ".cfg",
+        ".conf"
+      ],
+      "mime": "text/x-ini",
+      "category": "source",
+      "label": "INI config",
+      "preview": "text",
+      "headers": [
+        {
+          "bytes": "5B",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": false
+    },
+    {
+      "id": "log",
+      "extensions": [
+        ".log"
+      ],
+      "mime": "text/plain",
+      "category": "source",
+      "label": "Log file",
+      "preview": "text",
+      "headers": [
+        {
+          "bytes": "",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": false
+    },
+    {
+      "id": "csv",
+      "extensions": [
+        ".csv"
+      ],
+      "mime": "text/csv",
+      "category": "source",
+      "label": "CSV data",
+      "preview": "text",
+      "headers": [
+        {
+          "bytes": "",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": false
+    },
+    {
+      "id": "tsv",
+      "extensions": [
+        ".tsv"
+      ],
+      "mime": "text/tab-separated-values",
+      "category": "source",
+      "label": "TSV data",
+      "preview": "text",
+      "headers": [
+        {
+          "bytes": "",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": false
+    },
+    {
+      "id": "markdown",
+      "extensions": [
+        ".md",
+        ".markdown"
+      ],
+      "mime": "text/markdown",
+      "category": "source",
+      "label": "Markdown document",
+      "preview": "text",
+      "headers": [
+        {
+          "bytes": "",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": false
+    },
+    {
+      "id": "rar4",
+      "extensions": [
+        ".rar"
+      ],
+      "mime": "application/x-rar-compressed",
+      "category": "archives",
+      "label": "RAR 4 archive",
+      "preview": "archive",
+      "headers": [
+        {
+          "bytes": "526172211A0700",
+          "offset": 0
+        }
+      ],
+      "min_size": 16,
+      "carve": true
+    },
+    {
+      "id": "zip_empty",
+      "extensions": [
+        ".zip"
+      ],
+      "mime": "application/zip",
+      "category": "archives",
+      "label": "Empty ZIP archive",
+      "preview": "archive",
+      "headers": [
+        {
+          "bytes": "504B0506",
+          "offset": 0
+        }
+      ],
+      "min_size": 22,
+      "carve": true
+    },
+    {
+      "id": "tar_old",
+      "extensions": [
+        ".tar"
+      ],
+      "mime": "application/x-tar",
+      "category": "archives",
+      "label": "TAR archive (ustar)",
+      "preview": "archive",
+      "headers": [
+        {
+          "bytes": "757374617200",
+          "offset": 257
+        }
+      ],
+      "min_size": 512,
+      "carve": true
+    },
+    {
+      "id": "sit",
+      "extensions": [
+        ".sit"
+      ],
+      "mime": "application/x-stuffit",
+      "category": "archives",
+      "label": "StuffIt archive",
+      "preview": "archive",
+      "headers": [
+        {
+          "bytes": "53495421",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": true
+    },
+    {
+      "id": "7z_empty",
+      "extensions": [
+        ".7z"
+      ],
+      "mime": "application/x-7z-compressed",
+      "category": "archives",
+      "label": "7-Zip archive",
+      "preview": "archive",
+      "headers": [
+        {
+          "bytes": "377ABCAF271C",
+          "offset": 0
+        }
+      ],
+      "min_size": 32,
+      "carve": true
+    },
+    {
+      "id": "gz",
+      "extensions": [
+        ".gz",
+        ".tgz"
+      ],
+      "mime": "application/gzip",
+      "category": "archives",
+      "label": "GZip archive",
+      "preview": "archive",
+      "headers": [
+        {
+          "bytes": "1F8B08",
+          "offset": 0
+        }
+      ],
+      "min_size": 20,
+      "carve": true
+    },
+    {
+      "id": "bz2",
+      "extensions": [
+        ".bz2"
+      ],
+      "mime": "application/x-bzip2",
+      "category": "archives",
+      "label": "BZip2 archive",
+      "preview": "archive",
+      "headers": [
+        {
+          "bytes": "425A68",
+          "offset": 0
+        }
+      ],
+      "min_size": 20,
+      "carve": true
+    },
+    {
+      "id": "xz",
+      "extensions": [
+        ".xz"
+      ],
+      "mime": "application/x-xz",
+      "category": "archives",
+      "label": "XZ archive",
+      "preview": "archive",
+      "headers": [
+        {
+          "bytes": "FD377A585A00",
+          "offset": 0
+        }
+      ],
+      "min_size": 20,
+      "carve": true
+    },
+    {
+      "id": "cab",
+      "extensions": [
+        ".cab"
+      ],
+      "mime": "application/vnd.ms-cab-compressed",
+      "category": "archives",
+      "label": "Cabinet archive",
+      "preview": "archive",
+      "headers": [
+        {
+          "bytes": "4D534346",
+          "offset": 0
+        }
+      ],
+      "min_size": 16,
+      "carve": true
+    },
+    {
+      "id": "zstd",
+      "extensions": [
+        ".zst"
+      ],
+      "mime": "application/zstd",
+      "category": "archives",
+      "label": "Zstandard archive",
+      "preview": "archive",
+      "headers": [
+        {
+          "bytes": "28B52FFD",
+          "offset": 0
+        }
+      ],
+      "min_size": 8,
+      "carve": true
+    },
+    {
+      "id": "iso",
+      "extensions": [
+        ".iso"
+      ],
+      "mime": "application/x-iso9660-image",
+      "category": "archives",
+      "label": "ISO image",
+      "preview": "archive",
+      "headers": [
+        {
+          "bytes": "4344303031",
+          "offset": 32769
+        }
+      ],
+      "min_size": 32768,
+      "carve": false
+    },
+    {
+      "id": "pdfx",
+      "extensions": [
+        ".pdfx"
+      ],
+      "mime": "application/pdf",
+      "category": "documents",
+      "label": "PDF/A document",
+      "preview": "pdf",
+      "headers": [
+        {
+          "bytes": "25504446",
+          "offset": 0
+        }
+      ],
+      "footer": {
+        "bytes": "2525454F46",
+        "max_gap": 262144
+      },
+      "min_size": 100,
+      "carve": true
+    },
+    {
+      "id": "odt",
+      "extensions": [
+        ".odt"
+      ],
+      "mime": "application/vnd.oasis.opendocument.text",
+      "category": "documents",
+      "label": "OpenDocument text",
+      "preview": "archive",
+      "headers": [
+        {
+          "bytes": "504B0304",
+          "offset": 0
+        }
+      ],
+      "footer": {
+        "bytes": "504B0506",
+        "max_gap": 262144
+      },
+      "min_size": 64,
+      "carve": true
+    },
+    {
+      "id": "ods",
+      "extensions": [
+        ".ods"
+      ],
+      "mime": "application/vnd.oasis.opendocument.spreadsheet",
+      "category": "documents",
+      "label": "OpenDocument spreadsheet",
+      "preview": "archive",
+      "headers": [
+        {
+          "bytes": "504B0304",
+          "offset": 0
+        }
+      ],
+      "footer": {
+        "bytes": "504B0506",
+        "max_gap": 262144
+      },
+      "min_size": 64,
+      "carve": true
+    },
+    {
+      "id": "odp",
+      "extensions": [
+        ".odp"
+      ],
+      "mime": "application/vnd.oasis.opendocument.presentation",
+      "category": "documents",
+      "label": "OpenDocument presentation",
+      "preview": "archive",
+      "headers": [
+        {
+          "bytes": "504B0304",
+          "offset": 0
+        }
+      ],
+      "footer": {
+        "bytes": "504B0506",
+        "max_gap": 262144
+      },
+      "min_size": 64,
+      "carve": true
+    },
+    {
+      "id": "pages",
+      "extensions": [
+        ".pages"
+      ],
+      "mime": "application/x-iwork-pages",
+      "category": "documents",
+      "label": "Apple Pages",
+      "preview": "archive",
+      "headers": [
+        {
+          "bytes": "504B0304",
+          "offset": 0
+        }
+      ],
+      "footer": {
+        "bytes": "504B0506",
+        "max_gap": 262144
+      },
+      "min_size": 64,
+      "carve": true
+    },
+    {
+      "id": "numbers",
+      "extensions": [
+        ".numbers"
+      ],
+      "mime": "application/x-iwork-numbers",
+      "category": "documents",
+      "label": "Apple Numbers",
+      "preview": "archive",
+      "headers": [
+        {
+          "bytes": "504B0304",
+          "offset": 0
+        }
+      ],
+      "footer": {
+        "bytes": "504B0506",
+        "max_gap": 262144
+      },
+      "min_size": 64,
+      "carve": true
+    },
+    {
+      "id": "key",
+      "extensions": [
+        ".key"
+      ],
+      "mime": "application/x-iwork-keynote",
+      "category": "documents",
+      "label": "Apple Keynote",
+      "preview": "archive",
+      "headers": [
+        {
+          "bytes": "504B0304",
+          "offset": 0
+        }
+      ],
+      "footer": {
+        "bytes": "504B0506",
+        "max_gap": 262144
+      },
+      "min_size": 64,
+      "carve": true
+    },
+    {
+      "id": "rtf_alt",
+      "extensions": [
+        ".rtf"
+      ],
+      "mime": "application/rtf",
+      "category": "documents",
+      "label": "Rich Text Format",
+      "preview": "text",
+      "headers": [
+        {
+          "bytes": "7B5C727466",
+          "offset": 0
+        }
+      ],
+      "min_size": 8,
+      "carve": true
+    },
+    {
+      "id": "tex",
+      "extensions": [
+        ".tex",
+        ".sty",
+        ".cls"
+      ],
+      "mime": "application/x-tex",
+      "category": "source",
+      "label": "TeX document",
+      "preview": "text",
+      "headers": [
+        {
+          "bytes": "5C646F63756D656E74797065",
+          "offset": 0
+        },
+        {
+          "bytes": "5C646F63756D656E746C617373",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": false
+    },
+    {
+      "id": "r",
+      "extensions": [
+        ".r",
+        ".R"
+      ],
+      "mime": "text/x-r",
+      "category": "source",
+      "label": "R script",
+      "preview": "text",
+      "headers": [
+        {
+          "bytes": "",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": false
+    },
+    {
+      "id": "swift",
+      "extensions": [
+        ".swift"
+      ],
+      "mime": "text/x-swift",
+      "category": "source",
+      "label": "Swift source",
+      "preview": "text",
+      "headers": [
+        {
+          "bytes": "696D706F7274204379706F6E",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": false
+    },
+    {
+      "id": "kt",
+      "extensions": [
+        ".kt",
+        ".kts"
+      ],
+      "mime": "text/x-kotlin",
+      "category": "source",
+      "label": "Kotlin source",
+      "preview": "text",
+      "headers": [
+        {
+          "bytes": "7061636B61676520",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": false
+    },
+    {
+      "id": "scala",
+      "extensions": [
+        ".scala",
+        ".sc"
+      ],
+      "mime": "text/x-scala",
+      "category": "source",
+      "label": "Scala source",
+      "preview": "text",
+      "headers": [
+        {
+          "bytes": "7061636B61676520",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": false
+    },
+    {
+      "id": "go",
+      "extensions": [
+        ".go"
+      ],
+      "mime": "text/x-go",
+      "category": "source",
+      "label": "Go source",
+      "preview": "text",
+      "headers": [
+        {
+          "bytes": "7061636B61676520",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": false
+    },
+    {
+      "id": "rs",
+      "extensions": [
+        ".rs"
+      ],
+      "mime": "text/x-rust",
+      "category": "source",
+      "label": "Rust source",
+      "preview": "text",
+      "headers": [
+        {
+          "bytes": "7061636B61676520",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": false
+    },
+    {
+      "id": "php",
+      "extensions": [
+        ".php"
+      ],
+      "mime": "application/x-php",
+      "category": "source",
+      "label": "PHP source",
+      "preview": "text",
+      "headers": [
+        {
+          "bytes": "3C3F706870",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": false
+    },
+    {
+      "id": "pl",
+      "extensions": [
+        ".pl",
+        ".pm"
+      ],
+      "mime": "text/x-perl",
+      "category": "source",
+      "label": "Perl script",
+      "preview": "text",
+      "headers": [
+        {
+          "bytes": "75736520737472696374",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": false
+    },
+    {
+      "id": "rb",
+      "extensions": [
+        ".rb"
+      ],
+      "mime": "text/x-ruby",
+      "category": "source",
+      "label": "Ruby script",
+      "preview": "text",
+      "headers": [
+        {
+          "bytes": "216720",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": false
+    },
+    {
+      "id": "lua",
+      "extensions": [
+        ".lua"
+      ],
+      "mime": "text/x-lua",
+      "category": "source",
+      "label": "Lua script",
+      "preview": "text",
+      "headers": [
+        {
+          "bytes": "6C6F63616C2066756E6374696F6E",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": false
+    },
+    {
+      "id": "tcl",
+      "extensions": [
+        ".tcl",
+        ".itk",
+        ".itcl"
+      ],
+      "mime": "text/x-tcl",
+      "category": "source",
+      "label": "Tcl script",
+      "preview": "text",
+      "headers": [
+        {
+          "bytes": "2321",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": false
+    },
+    {
+      "id": "vbs",
+      "extensions": [
+        ".vbs",
+        ".vbe"
+      ],
+      "mime": "application/x-vbscript",
+      "category": "source",
+      "label": "VBScript",
+      "preview": "text",
+      "headers": [
+        {
+          "bytes": "244F626A656374",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": false
+    },
+    {
+      "id": "reg",
+      "extensions": [
+        ".reg"
+      ],
+      "mime": "application/x-registry",
+      "category": "source",
+      "label": "Windows Registry",
+      "preview": "text",
+      "headers": [
+        {
+          "bytes": "57494E524547494E535400",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": false
+    },
+    {
+      "id": "desktop",
+      "extensions": [
+        ".desktop"
+      ],
+      "mime": "application/x-desktop",
+      "category": "source",
+      "label": "Desktop entry",
+      "preview": "text",
+      "headers": [
+        {
+          "bytes": "5B4465736B746F7020456E7472795D",
+          "offset": 0
+        }
+      ],
+      "min_size": 64,
+      "carve": false
+    }
+  ]
+}
