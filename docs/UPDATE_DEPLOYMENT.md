@@ -25,6 +25,8 @@ Put both on any static HTTPS host (GitHub Releases, S3, Cloudflare R2, or a plai
 }
 ```
 
+**Generating the manifest:** `python tools/build_update.py` builds the ZIP, computes `sha256`/`size_bytes`, stamps `published_at`, and writes a ready-to-host `manifest.json` to the project root. Only the `url` field needs editing (the build tool keeps your edited URL and notes across rebuilds). Pass `--skip-build` to re-zip without rebuilding, or `--url "https://…"` / `--notes "…"` to set values from the command line.
+
 The checker reads `data.get("version")`, `"url"`, `"notes"`, `"published_at"`, `"size_bytes"`, `"sha256"`. If `version` matches the running version, no update is offered. If `sha256` is missing, verification is skipped (include it).
 
 > **Important:** the default endpoint is `https://api.github.com/repos/rescuer-app/rescuer/releases/latest` (GitHub's API schema). That response does **not** match this manifest format, so point the app at your own manifest URL (see step 4).
