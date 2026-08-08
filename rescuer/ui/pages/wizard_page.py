@@ -268,6 +268,21 @@ class WizardPage(Page):
         search_row.addWidget(self._review_count)
         layout.addLayout(search_row)
 
+        self._folder_hint = QLabel("")
+        self._folder_hint.setWordWrap(True)
+        self._folder_hint.setProperty("muted", True)
+        self._folder_hint.setVisible(False)
+        layout.addWidget(self._folder_hint)
+
+        hint_row = QHBoxLayout()
+        self._recycle_btn = QPushButton("Scan the Recycle Bin for this drive")
+        self._recycle_btn.setObjectName("Ghost")
+        self._recycle_btn.clicked.connect(self.start_recycle_scan_for)
+        self._recycle_btn.setVisible(False)
+        hint_row.addWidget(self._recycle_btn)
+        hint_row.addStretch(1)
+        layout.addLayout(hint_row)
+
         self._review_table = QTableWidget(0, 6)
         self._review_table.setHorizontalHeaderLabels(["Name", "Type", "Size", "Quality", "Method", "Status"])
         self._review_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
@@ -678,6 +693,7 @@ class WizardPage(Page):
         self._scan_label.setText("Scan finished. Loading results…")
         self._load_review_rows()
         self._load_vaults()
+        self._maybe_show_folder_hint()
         self._go(3)
 
     def _on_scan_cancelled(self, _scan_id: int, count: int) -> None:
@@ -691,6 +707,7 @@ class WizardPage(Page):
         self._review_count.setText(
             f"{count} file(s) — scan cancelled, partial results are recoverable"
         )
+        self._maybe_show_folder_hint()
         self._go(3)
 
     def _scan_summary(self, cancelled: bool) -> str:
@@ -707,6 +724,32 @@ class WizardPage(Page):
         if cancelled:
             return f"Scan cancelled · {count} partial file(s) found · {elapsed}"
         return f"Scan finished · {count} file(s) found · {elapsed}"
+
+    def _maybe_show_folder_hint(self) -> None:
+        """Explain zero quick-scan results and offer the Recycle Bin scan."""
+        self._folder_hint.setVisible(False)
+        self._recycle_btn.setVisible(False)
+        if self._scan_mode != "quick" or self._scan_id is None:
+            return
+        source = self._source
+        if source is None or source.kind != "volume":
+            return
+        rows = self._ctx.db.query(
+            "SELECT COUNT(*) AS n FROM files WHERE scan_id = ?", (self._scan_id,)
+        )
+        if rows and rows[0]["n"] != 0:
+            return
+        target = source.path or source.display_name
+        self._recycle_pending_source = source
+        self._folder_hint.setText(
+            f"No deleted files found in {target}.\n\n"
+            "Files deleted with the Delete key are moved to the Windows "
+            "Recycle Bin rather than removed from the folder, so they do not "
+            "appear here. Use the Recycle Bin scan to recover them and restore "
+            "them to their original locations."
+        )
+        self._folder_hint.setVisible(True)
+        self._recycle_btn.setVisible(True)
 
     def _on_scan_failed(self, _scan_id: int, error: str) -> None:
         self._stop_scan_clock()
@@ -875,6 +918,8 @@ class WizardPage(Page):
         self._scan_started = None
         self._scan_timer.setText("")
         self._complete_note.setText("")
+        self._folder_hint.setVisible(False)
+        self._recycle_btn.setVisible(False)
         self._scan_progress.setValue(0)
         self._review_table.setRowCount(0)
         self._image_label.setText("")

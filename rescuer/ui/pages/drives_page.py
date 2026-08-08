@@ -106,6 +106,7 @@ class DrivesPage(Page):
 
         self._volumes: list[VolumeInfo] = []
         self._ctx = AppContext.instance()
+        self._ctx.events.drives_changed.connect(self.refresh)
 
         self._imaging_ctl = ImagingController()
         self._imaging_ctl.progress.connect(self._on_image_progress)

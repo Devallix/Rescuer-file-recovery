@@ -1,5 +1,6 @@
 import logging
 import os
+import struct
 
 import pytsk3
 
@@ -17,6 +18,21 @@ TSK_FS_NAME_TYPE_VIRT_DIR = 0x0B
 TSK_FS_META_FLAG_UNALLOC = 0x0002
 
 ORPHAN_DIR = "$OrphanFiles"
+
+# Difference between the Windows FILETIME epoch (1601-01-01) and the Unix
+# epoch (1970-01-01), in seconds.
+_FILETIME_EPOCH = 11644473600.0
+
+# $FILE_NAME attribute type in an NTFS MFT record.
+_NTFS_FILE_NAME_ATTR = 0x30
+
+
+def _filetime_to_epoch(ft: int) -> float | None:
+    """Convert a Windows FILETIME (100 ns ticks) to a Unix epoch seconds."""
+    if not ft:
+        return None
+    seconds = ft / 10_000_000.0 - _FILETIME_EPOCH
+    return seconds if seconds > 0 else None
 
 _META_FILTER = {"$MBR", "$FAT1", "$FAT2", "$MFT", "$MFTMirr", "$LogFile",
                 "$Volume", "$AttrDef", "$Bitmap", "$Boot", "$BadClus",
@@ -109,21 +125,205 @@ class TskSource:
 
     def iter_entries(self, progress=None, cancel_flag: list[bool] | None = None):
         seen: set[int] = set()
+        # Directory inodes reachable from the scan root, mapped to their TSK
+        # paths. Used to match deleted $MFT records back to a scanned folder.
+        dir_inodes: dict[int, str] = {}
         for entry in self._iter_dir(self.start_path, progress=progress, cancel_flag=cancel_flag):
             if entry.inode >= 0:
                 seen.add(entry.inode)
+                if entry.is_dir:
+                    dir_inodes[entry.inode] = entry.path
             yield entry
-        if not self.scan_orphans:
+        if self.scan_orphans:
+            # Orphaned files whose parent directory was itself deleted are not
+            # reachable through the tree; TSK exposes them through the virtual
+            # $OrphanFiles directory (TSK_FS_ORPHANDIR_INUM == last_inum).
+            for entry in self.iter_orphans(progress=progress, cancel_flag=cancel_flag):
+                if entry.inode >= 0 and entry.inode in seen:
+                    continue
+                if entry.inode >= 0:
+                    seen.add(entry.inode)
+                yield entry
+        if self._is_ntfs():
+            # On NTFS the directory index usually discards deleted entries
+            # (the index root/INDX slack is compacted away on busy volumes
+            # like the system drive), so a folder walk alone reports nothing.
+            # Scan the $MFT for unallocated records whose parent directory is
+            # inside the scanned subtree to recover them.
+            root_inode = self._root_dir_inode()
+            if root_inode is not None and root_inode not in dir_inodes:
+                dir_inodes[root_inode] = self.start_path
+            yield from self._iter_mft_deleted(dir_inodes, seen, progress=progress, cancel_flag=cancel_flag)
+
+    def _is_ntfs(self) -> bool:
+        try:
+            # TSK_FS_TYPE_NTFS == 1
+            return bool(int(self.fs_type) & 1)
+        except (TypeError, ValueError):
+            return False
+
+    def _root_dir_inode(self) -> int | None:
+        """Inode of the directory being scanned (its ``.`` entry)."""
+        try:
+            directory = self.fs.open_dir(self.start_path)
+        except (IOError, OSError, RuntimeError):
+            return None
+        try:
+            for ent in directory:
+                name_info = ent.info.name
+                if name_info is not None and name_info.name in (b".", "."):
+                    return ent.info.meta.addr if ent.info.meta else None
+        except (IOError, OSError, RuntimeError):
+            return None
+        return None
+
+    def _ntfs_mft_record_size(self) -> int:
+        """Size of an NTFS MFT record, read from the boot sector."""
+        boot = b""
+        try:
+            boot_file = self.fs.open_meta(inode=7)  # $Boot
+            boot = boot_file.read_random(0, 512)
+        except (IOError, OSError, RuntimeError, TypeError):
+            pass
+        if len(boot) < 0x41 or boot[3:8] != b"NTFS ":
+            try:
+                boot = self.img.read(0, 512)
+            except (IOError, OSError, RuntimeError, TypeError):
+                return 0
+        if len(boot) < 0x41 or boot[3:8] != b"NTFS ":
+            return 0
+        bpt = int.from_bytes(boot[0x40:0x41], "little", signed=True)
+        if bpt == 0:
+            return 1024
+        size = 1 << bpt if bpt > 0 else 1 << -bpt
+        return size if 256 <= size <= 65536 else 0
+
+    def _iter_mft_deleted(
+        self,
+        dir_inodes: dict[int, str],
+        seen: set[int],
+        progress=None,
+        cancel_flag: list[bool] | None = None,
+    ):
+        """Recover deleted files on NTFS by scanning unallocated $MFT records.
+
+        ``dir_inodes`` maps directory inodes (inside the scanned subtree) to
+        their TSK paths; a deleted record is reported when its $FILE_NAME
+        parent directory is in that subtree. Deleted subdirectories expand the
+        set so files deleted together with their parent folder are found too.
+        """
+        rec_size = self._ntfs_mft_record_size()
+        if not rec_size:
             return
-        # Orphaned files whose parent directory was itself deleted are not
-        # reachable through the tree; TSK exposes them through the virtual
-        # $OrphanFiles directory (TSK_FS_ORPHANDIR_INUM == last_inum).
-        for entry in self.iter_orphans(progress=progress, cancel_flag=cancel_flag):
-            if entry.inode >= 0 and entry.inode in seen:
-                continue
-            if entry.inode >= 0:
-                seen.add(entry.inode)
-            yield entry
+        try:
+            mft = self.fs.open_meta(inode=0)  # $MFT
+            mft_size = mft.info.meta.size
+        except (IOError, OSError, RuntimeError, TypeError):
+            return
+        if mft_size <= 0:
+            return
+
+        parent_ok: set[int] = set(dir_inodes)
+        dir_paths: dict[int, str] = dict(dir_inodes)
+
+        def parse(rec: bytearray) -> tuple | None:
+            if rec[0:4] != b"FILE":
+                return None
+            if struct.unpack_from("<Q", rec, 0x20)[0] != 0:
+                return None  # extension record; the name lives in the base one
+            flags = struct.unpack_from("<H", rec, 0x16)[0]
+            if flags & 0x0001:
+                return None  # record still in use
+            usa_off, usa_cnt = struct.unpack_from("<HH", rec, 0x04)
+            attr_off = struct.unpack_from("<H", rec, 0x14)[0]
+            if usa_cnt > 1 and 0 < usa_off + 2 * usa_cnt <= rec_size:
+                fixups = bytes(rec[usa_off + 2: usa_off + 2 * usa_cnt])
+                for k in range(1, usa_cnt):
+                    s = k * 512 - 2
+                    if s >= 2 and s + 2 <= rec_size:
+                        rec[s:s + 2] = fixups[2 * k - 2:2 * k]
+            pos = attr_off
+            while pos + 8 <= rec_size:
+                atype, alen = struct.unpack_from("<II", rec, pos)
+                if atype == 0xFFFFFFFF:
+                    break
+                if alen == 0 or pos + alen > rec_size:
+                    break
+                if atype == _NTFS_FILE_NAME_ATTR:
+                    content_off = struct.unpack_from("<H", rec, pos + 0x14)[0]
+                    base = pos + content_off
+                    name = None
+                    parent = 0
+                    fsize = 0
+                    crtime = mtime = atime = None
+                    if base + 0x42 + 2 <= rec_size:
+                        parent = struct.unpack_from("<Q", rec, base)[0] & 0xFFFFFFFFFFFF
+                        nlen = rec[base + 0x40]
+                        raw_name = bytes(rec[base + 0x42: base + 0x42 + 2 * nlen])
+                        if nlen and len(raw_name) == 2 * nlen:
+                            name = raw_name.decode("utf-16-le", "replace")
+                        fsize = struct.unpack_from("<Q", rec, base + 0x30)[0]
+                        crtime = _filetime_to_epoch(struct.unpack_from("<Q", rec, base + 0x08)[0])
+                        mtime = _filetime_to_epoch(struct.unpack_from("<Q", rec, base + 0x10)[0])
+                        atime = _filetime_to_epoch(struct.unpack_from("<Q", rec, base + 0x20)[0])
+                    return (name, parent, bool(flags & 0x0002), fsize, crtime, mtime, atime)
+                pos += alen
+            return None
+
+        chunk = 16 * 1024 * 1024
+        offset = 0
+        carry = b""
+        while offset < mft_size:
+            if cancel_flag and cancel_flag[0]:
+                return
+            length = min(chunk, mft_size - offset)
+            try:
+                data = carry + mft.read_random(offset, length)
+            except (IOError, OSError, RuntimeError):
+                return
+            nfull = len(data) // rec_size
+            carry = data[nfull * rec_size:]
+            for i in range(nfull):
+                idx = offset // rec_size + i
+                rec = bytearray(data[i * rec_size:(i + 1) * rec_size])
+                parsed = parse(rec)
+                if parsed is None:
+                    continue
+                name, parent, is_dir, fsize, crtime, mtime, atime = parsed
+                if parent not in parent_ok:
+                    continue
+                if is_dir:
+                    if idx not in dir_paths:
+                        base = dir_paths.get(parent, self.start_path)
+                        dir_paths[idx] = f"{base}/{name}"
+                        parent_ok.add(idx)
+                    continue
+                if idx in seen:
+                    continue
+                seen.add(idx)
+                base = dir_paths.get(parent, self.start_path)
+                full_path = f"{base}/{name}"
+                entry = FsEntry(
+                    name=name,
+                    path=full_path,
+                    size=fsize,
+                    is_dir=False,
+                    is_deleted=True,
+                    fs_type=self.fs_type,
+                    inode=idx,
+                    name_flags=TSK_FS_NAME_FLAG_UNALLOC,
+                    created=crtime,
+                    modified=mtime,
+                    accessed=atime,
+                    cluster=idx,
+                )
+                self._make_reader(entry, idx)
+                if progress is not None:
+                    progress()
+                yield entry
+            offset += chunk
+            if progress is not None:
+                progress()
 
     def iter_orphans(self, progress=None, cancel_flag: list[bool] | None = None):
         if not self._supports_orphans(self.fs_type):

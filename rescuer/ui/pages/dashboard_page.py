@@ -1,3 +1,5 @@
+import datetime
+
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QFrame,
@@ -57,7 +59,7 @@ class StorageRingCard(QFrame):
         layout.addWidget(label)
 
         usage = QLabel(
-            f"{_human(volume.used_bytes)} used · {_human(volume.free_bytes)} free"
+            f"{_human(volume.used_bytes)} used · {_human(volume.free_bytes)} free of {_human(volume.capacity)} total"
         )
         usage.setAlignment(Qt.AlignmentFlag.AlignCenter)
         usage.setWordWrap(True)
@@ -89,11 +91,25 @@ class DashboardPage(Page):
         root.setContentsMargins(28, 24, 28, 24)
         root.setSpacing(18)
 
+        header_row = QHBoxLayout()
+        header_row.setSpacing(12)
         self._header = PageHeader(
             "Dashboard",
             "Overview of your storage, recent recovery activity, and system health.",
         )
-        root.addWidget(self._header)
+        header_row.addWidget(self._header, 1)
+        self._last_refreshed = QLabel("")
+        self._last_refreshed.setProperty("faint", True)
+        self._last_refreshed.setAlignment(Qt.AlignmentFlag.AlignBottom)
+        header_row.addWidget(self._last_refreshed)
+        self._refresh_btn = QPushButton("Refresh")
+        self._refresh_btn.setObjectName("Ghost")
+        self._refresh_btn.setToolTip(
+            "Re-detect connected drives and refresh capacity information across the app"
+        )
+        self._refresh_btn.clicked.connect(self._on_refresh_clicked)
+        header_row.addWidget(self._refresh_btn)
+        root.addLayout(header_row)
 
         root.addWidget(self._build_blocked_banner())
 
@@ -149,6 +165,7 @@ class DashboardPage(Page):
         scan_btn.clicked.connect(lambda: self._ctx.events.quick_action_requested.emit("quick_scan"))
         img_btn.clicked.connect(lambda: self._ctx.events.quick_action_requested.emit("image"))
         self._ctx.events.scan_blocked.connect(self._show_blocked)
+        self._ctx.events.drives_changed.connect(self.refresh)
 
     def _build_blocked_banner(self) -> QWidget:
         banner = QFrame()
@@ -261,6 +278,12 @@ class DashboardPage(Page):
     def refresh(self) -> None:
         self._pool.submit(self._detector.list_volumes, on_done=self._on_volumes, on_error=self._on_error)
 
+    def _on_refresh_clicked(self) -> None:
+        self._refresh_btn.setEnabled(False)
+        self._refresh_btn.setText("Refreshing…")
+        self._loading.setText("Detecting storage…")
+        self._ctx.events.drives_changed.emit()
+
     def _toggle_theme(self) -> None:
         ctx = AppContext.instance()
         current = ctx.config.get("appearance.theme", "dark")
@@ -276,6 +299,9 @@ class DashboardPage(Page):
                 widget.deleteLater()
 
     def _on_volumes(self, volumes: list[VolumeInfo]) -> None:
+        self._refresh_btn.setEnabled(True)
+        self._refresh_btn.setText("Refresh")
+        self._last_refreshed.setText(f"Last refreshed {datetime.datetime.now():%H:%M:%S}")
         self._clear_rings()
         total = sum(v.capacity for v in volumes)
         free = sum(v.free_bytes for v in volumes)
@@ -308,4 +334,6 @@ class DashboardPage(Page):
             self._loading.setText(f"Showing {len(volumes)} storage volume(s).")
 
     def _on_error(self, exc: Exception) -> None:
+        self._refresh_btn.setEnabled(True)
+        self._refresh_btn.setText("Refresh")
         self._loading.setText(f"Failed to detect storage: {exc}")

@@ -213,3 +213,125 @@ def test_walk_folder_only_scans_subtree():
     fs = _FakeTreeFS({"/": root, "/sub": sub})
     src = TskSource(None, fs, start_path="/sub", scan_orphans=False)
     assert {e.name for e in src.iter_entries()} == {"gone.txt", "live.txt"}
+
+
+# ---------------- NTFS $MFT deleted-record scan ----------------
+
+import struct
+
+
+def _build_mft_record(name, parent, fsize=100, is_dir=False):
+    """Build a valid 1024-byte NTFS MFT record with one $FILE_NAME attr."""
+    rec = bytearray(1024)
+    rec[0:4] = b"FILE"
+    usa_off, usa_cnt = 0x30, 3
+    struct.pack_into("<HH", rec, 0x04, usa_off, usa_cnt)
+    struct.pack_into("<H", rec, 0x10, 1)  # sequence
+    struct.pack_into("<H", rec, 0x12, 1)  # hard links
+    struct.pack_into("<H", rec, 0x14, 0x38)  # first attribute
+    struct.pack_into("<H", rec, 0x16, 0x02 if is_dir else 0x00)  # flags (not in use)
+    struct.pack_into("<H", rec, 0x18, 0x0200)  # used bytes
+    name_bytes = name.encode("utf-16-le")
+    content_len = 0x42 + len(name_bytes)
+    attr_len = 0x18 + content_len
+    attr = 0x38
+    struct.pack_into("<I", rec, attr + 0x00, 0x30)  # $FILE_NAME
+    struct.pack_into("<I", rec, attr + 0x04, attr_len)
+    struct.pack_into("<I", rec, attr + 0x10, content_len)
+    struct.pack_into("<H", rec, attr + 0x14, 0x18)
+    base = attr + 0x18
+    struct.pack_into("<Q", rec, base + 0x00, parent)  # parent file reference
+    struct.pack_into("<Q", rec, base + 0x28, fsize)  # allocated size
+    struct.pack_into("<Q", rec, base + 0x30, fsize)  # real size
+    rec[base + 0x40] = len(name_bytes) // 2  # name length (chars)
+    rec[base + 0x41] = 1  # namespace
+    rec[base + 0x42: base + 0x42 + len(name_bytes)] = name_bytes
+    struct.pack_into("<I", rec, attr + attr_len, 0xFFFFFFFF)  # end marker
+    for k in range(1, usa_cnt):
+        tail = rec[k * 512 - 2: k * 512]
+        rec[usa_off + 2 * k: usa_off + 2 * k + 2] = tail
+    return bytes(rec)
+
+
+class _FakeMftFile:
+    def __init__(self, buf):
+        self._buf = buf
+        self.info = _FakeSize(len(buf))
+
+    def read_random(self, offset, length):
+        return self._buf[offset:offset + length]
+
+
+class _FakeSize:
+    def __init__(self, size):
+        self.meta = _FakeMetaSize(size)
+
+
+class _FakeMetaSize:
+    def __init__(self, size):
+        self.size = size
+
+
+class _FakeBoot:
+    def read_random(self, offset, length):
+        boot = bytearray(512)
+        boot[3:8] = b"NTFS "
+        return bytes(boot[offset:offset + length])
+
+
+class _FakeNtfsFS:
+    def __init__(self, mft_buf):
+        self._mft = mft_buf
+        self.info = _FakeFsInfo(1)
+
+    def open_meta(self, addr=None, inode=None, **kwargs):
+        a = inode if inode is not None else addr
+        if a == 0:
+            return _FakeMftFile(self._mft)
+        if a == 7:
+            return _FakeBoot()
+        return _FakeFile(None, None)
+
+
+def test_mft_deleted_scan_recovers_file_in_folder():
+    rec = _build_mft_record("lost.doc", parent=500)
+    fs = _FakeNtfsFS(rec)
+    src = _source(fs, fs_type="1")
+    src.start_path = "/Users/Me/Docs"
+    src.img = None
+    entries = list(src._iter_mft_deleted({500: "/Users/Me/Docs"}, seen=set()))
+    assert len(entries) == 1
+    entry = entries[0]
+    assert entry.name == "lost.doc"
+    assert entry.path == "/Users/Me/Docs/lost.doc"
+    assert entry.is_deleted
+    assert not entry.is_dir
+    assert entry.size == 100
+    assert entry.inode == 0
+
+
+def test_mft_deleted_scan_follows_deleted_subdirectory():
+    dir_rec = _build_mft_record("old_folder", parent=500, is_dir=True)
+    file_rec = _build_mft_record("child.txt", parent=0, fsize=7)
+    buf = dir_rec + file_rec
+    fs = _FakeNtfsFS(buf)
+    src = _source(fs, fs_type="1")
+    src.start_path = "/root"
+    src.img = None
+    entries = list(src._iter_mft_deleted({500: "/root"}, seen=set()))
+    assert len(entries) == 1
+    assert entries[0].name == "child.txt"
+    assert entries[0].path == "/root/old_folder/child.txt"
+
+
+def test_mft_deleted_scan_skips_allocated_and_foreign_records():
+    live = _build_mft_record("live.txt", parent=500)
+    live = bytearray(live)
+    live[0x16] = live[0x16] | 0x0001  # mark record as in use
+    foreign = _build_mft_record("other.txt", parent=999)
+    fs = _FakeNtfsFS(bytes(live) + foreign)
+    src = _source(fs, fs_type="1")
+    src.start_path = "/root"
+    src.img = None
+    entries = list(src._iter_mft_deleted({500: "/root"}, seen=set()))
+    assert entries == []
