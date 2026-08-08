@@ -1,6 +1,6 @@
 """Rescuer — Professional File Recovery & Data Restoration Suite."""
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 APP_NAME = "Rescuer"
 APP_TAGLINE = "Bringing Lost Files Back to Life"
 APP_DESCRIPTION = "Professional File Recovery & Data Restoration Suite"
