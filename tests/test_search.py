@@ -98,3 +98,39 @@ def test_search_natural_language(db: Database, registry: SignatureRegistry, fat_
 def test_migration_002_adds_category_column(db: Database):
     cols = {r["name"] for r in db.query("PRAGMA table_info(files)")}
     assert "category" in cols
+
+
+def test_scan_controller_runs_multiple_scans_in_parallel(qtbot, db: Database, registry: SignatureRegistry):
+    import threading
+
+    from rescuer.engine.scan.controller import ScanController
+
+    gate = threading.Event()
+    sources = []
+
+    def fake_quick_scan(source, config, progress=None, cancel_flag=None):
+        sources.append(source)
+        gate.wait(10)
+        return []
+
+    monkeypatch = pytest.MonkeyPatch()
+    monkeypatch.setattr("rescuer.engine.scan.controller.run_quick_scan", fake_quick_scan)
+
+    try:
+        ctl = ScanController(db)
+        src_a = RecoverySource(kind="volume", mount_point="C:\\", label="A", fs_type="NTFS", size=0)
+        src_b = RecoverySource(kind="volume", mount_point="D:\\", label="B", fs_type="NTFS", size=0)
+        sid_a = ctl.start(ScanConfig(mode="quick", source=src_a), registry)
+        sid_b = ctl.start(ScanConfig(mode="quick", source=src_b), registry)
+
+        qtbot.waitUntil(lambda: len(sources) == 2, timeout=10000)
+        assert ctl.running
+        assert sorted(ctl.active_scan_ids) == sorted([sid_a, sid_b])
+
+        gate.set()
+        qtbot.waitUntil(lambda: not ctl.running, timeout=15000)
+        assert len(sources) == 2
+        assert ctl.active_scan_ids == []
+    finally:
+        gate.set()
+        monkeypatch.undo()

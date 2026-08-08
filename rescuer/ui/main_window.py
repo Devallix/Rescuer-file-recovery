@@ -1,11 +1,12 @@
 from PySide6.QtCore import Qt, QPropertyAnimation, Signal
-from PySide6.QtGui import QAction
+from PySide6.QtGui import QAction, QIcon
 from PySide6.QtWidgets import QGraphicsOpacityEffect, QHBoxLayout, QLabel, QMainWindow, QMenuBar, QStackedWidget, QStatusBar, QWidget
 
 from rescuer import APP_NAME, APP_TAGLINE
 from rescuer.core.app_context import AppContext
 from rescuer.core.theme import get_palette
 from rescuer.integrations.windows.admin import is_admin
+from rescuer.paths import Paths
 from rescuer.ui.navigation import NavItem, NavRail
 from rescuer.ui.pages.dashboard_page import DashboardPage
 from rescuer.ui.pages.drives_page import DrivesPage
@@ -13,6 +14,7 @@ from rescuer.ui.pages.reports_page import ReportsPage
 from rescuer.ui.pages.results_page import ResultsPage
 from rescuer.ui.pages.settings_page import SettingsPage
 from rescuer.ui.pages.wizard_page import WizardPage
+from rescuer.ui.tray import SystemTray
 
 NAV_ITEMS = [
     NavItem("dashboard", "Dashboard", "dashboard", "Ctrl+1"),
@@ -54,7 +56,76 @@ class MainWindow(QMainWindow):
         self._ctx.events.theme_changed.connect(self._apply_theme_name)
         self._ctx.events.open_device_requested.connect(self._on_open_device)
         self._ctx.events.quick_action_requested.connect(self._on_quick_action)
+        self._init_tray()
         self._nav.select("dashboard")
+
+    def _init_tray(self) -> None:
+        self._quitting = False
+        self._active_scans: set[int] = set()
+        self._tray = SystemTray(self, QIcon(str(Paths.img_dir / "logo.png")))
+        self._ctx.events.scan_started.connect(self._on_scan_started)
+        self._ctx.events.scan_finished.connect(self._on_scan_finished)
+        self._ctx.events.scan_cancelled.connect(self._on_scan_cancelled)
+        self._ctx.events.scan_error.connect(self._on_scan_error)
+
+    def set_quitting(self, value: bool = True) -> None:
+        self._quitting = value
+
+    def _update_tray(self) -> None:
+        self._tray.set_scan_count(len(self._active_scans))
+
+    def _on_scan_started(self, scan_id: int) -> None:
+        self._active_scans.add(scan_id)
+        self._update_tray()
+
+    def _on_scan_finished(self, scan_id: int) -> None:
+        self._active_scans.discard(scan_id)
+        self._update_tray()
+        if not self.isVisible():
+            self._tray.notify(APP_NAME, self._scan_done_message(scan_id, "Scan finished"))
+
+    def _on_scan_cancelled(self, scan_id: int, count: int) -> None:
+        self._active_scans.discard(scan_id)
+        self._update_tray()
+        if not self.isVisible():
+            self._tray.notify(
+                APP_NAME, f"Scan cancelled — {count} partial result(s) retained."
+            )
+
+    def _on_scan_error(self, scan_id: int, error: str) -> None:
+        self._active_scans.discard(scan_id)
+        self._update_tray()
+        if not self.isVisible():
+            self._tray.notify(APP_NAME, f"Scan failed: {error}")
+
+    def _scan_done_message(self, scan_id: int, prefix: str) -> str:
+        row = self._ctx.db.query_one(
+            "SELECT device_id, found_count FROM scans WHERE id = ?", (scan_id,)
+        )
+        if row:
+            device = row["device_id"] or "device"
+            count = row["found_count"] or 0
+            return f"{prefix}: {count} candidate(s) found on {device}."
+        return f"{prefix}."
+
+    def closeEvent(self, event) -> None:
+        tray_available = getattr(self, "_tray", None) is not None and self._tray.isVisible()
+        if not self._quitting and tray_available:
+            self.hide()
+            if self._active_scans:
+                self._tray.notify(
+                    APP_NAME, "A scan is still running. Rescuer continues in the system tray."
+                )
+            else:
+                self._tray.notify(
+                    APP_NAME, "Rescuer is still running in the system tray."
+                )
+            event.ignore()
+            return
+        tray = getattr(self, "_tray", None)
+        if tray is not None:
+            tray.hide()
+        event.accept()
 
     def _on_open_device(self, source) -> None:
         self._nav.select("wizard")
@@ -67,6 +138,9 @@ class MainWindow(QMainWindow):
         elif key == "quick_scan":
             self._nav.select("wizard")
             self._wizard.start_quick_scan()
+        elif key == "scan_folder":
+            self._nav.select("wizard")
+            self._wizard.start_folder_scan()
         elif key == "recycle_scan":
             self._nav.select("wizard")
             self._wizard.start_recycle_scan_for()

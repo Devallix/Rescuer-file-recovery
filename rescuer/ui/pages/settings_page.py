@@ -44,7 +44,7 @@ class SettingsPage(Page):
         updates.form.addRow("", self._check_updates)
 
         self._endpoint_edit = QLineEdit(str(self._ctx.config.get("updates.endpoint", "")))
-        self._endpoint_edit.setPlaceholderText("https://example.com/version.json")
+        self._endpoint_edit.setPlaceholderText("https://example.com/rescuer/manifest.json")
         self._endpoint_edit.textChanged.connect(self._on_endpoint_changed)
         updates.form.addRow("Update endpoint", self._endpoint_edit)
 
@@ -108,11 +108,8 @@ class SettingsPage(Page):
             if result is None:
                 QMessageBox.information(self, "Up to date", "You are running the latest version.")
             else:
-                QMessageBox.information(
-                    self,
-                    "Update available",
-                    f"Version {result.version} is available.\n\n{result.notes}",
-                )
+                from rescuer.engine.updates.installer import offer_update
+                offer_update(self, result)
 
         def _error(exc):
             self._check_now_btn.setEnabled(True)

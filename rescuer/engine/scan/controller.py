@@ -191,9 +191,10 @@ class ScanController(QObject):
         super().__init__()
         self._db = db
         self._plugins = plugins
-        self._worker: ScanWorker | None = None
+        self._workers: dict[int, ScanWorker] = {}
+        self._cancel_flags: dict[int, list[bool]] = {}
+        self._idle_callbacks: list = []
         self._signals = ScanSignals()
-        self._cancel: list[bool] = [False]
         self._signals.progress.connect(self.progress)
         self._signals.found.connect(self.found)
         self._signals.finished.connect(self.finished)
@@ -203,12 +204,20 @@ class ScanController(QObject):
 
     @property
     def running(self) -> bool:
-        return bool(self._worker and self._worker.isRunning())
+        return any(w.isRunning() for w in self._workers.values())
+
+    @property
+    def active_scan_ids(self) -> list[int]:
+        return [sid for sid, worker in self._workers.items() if worker.isRunning()]
+
+    def is_running(self, scan_id: int) -> bool:
+        worker = self._workers.get(scan_id)
+        return bool(worker and worker.isRunning())
 
     def when_idle(self, callback) -> None:
         """Invoke ``callback`` (on the GUI thread) once no scan worker is running."""
         if self.running:
-            self._worker.finished.connect(lambda: callback())
+            self._idle_callbacks.append(callback)
         else:
             callback()
 
@@ -227,15 +236,36 @@ class ScanController(QObject):
         )
 
     def start(self, config: ScanConfig, registry: SignatureRegistry, scan_id: int | None = None) -> int:
-        if self.running:
-            raise ScanError("A scan is already in progress")
         if config.source is None:
             raise ScanError("No recovery source selected")
         scan_id = scan_id or self.create_scan(config)
-        self._cancel = [False]
-        self._worker = ScanWorker(self._db, config, scan_id, registry, self._signals, self._cancel, self._plugins)
-        self._worker.start()
+        cancel = [False]
+        worker = ScanWorker(self._db, config, scan_id, registry, self._signals, cancel, self._plugins)
+        self._workers[scan_id] = worker
+        self._cancel_flags[scan_id] = cancel
+        worker.finished.connect(lambda: self._on_worker_exit(scan_id))
+        worker.start()
         return scan_id
 
-    def cancel(self) -> None:
-        self._cancel[0] = True
+    def cancel(self, scan_id: int | None = None) -> None:
+        if scan_id is None:
+            for flag in self._cancel_flags.values():
+                flag[0] = True
+        else:
+            flag = self._cancel_flags.get(scan_id)
+            if flag is not None:
+                flag[0] = True
+
+    def cancel_all(self) -> None:
+        self.cancel()
+
+    def _on_worker_exit(self, scan_id: int) -> None:
+        self._workers.pop(scan_id, None)
+        self._cancel_flags.pop(scan_id, None)
+        if not self.running and self._idle_callbacks:
+            callbacks, self._idle_callbacks = self._idle_callbacks, []
+            for callback in callbacks:
+                try:
+                    callback()
+                except Exception:
+                    log.exception("idle callback failed")

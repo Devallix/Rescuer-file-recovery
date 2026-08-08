@@ -70,7 +70,11 @@ class WizardPage(Page):
         self._pool = WorkerPool()
 
         self._source: RecoverySource | None = None
+        self._selected_sources: list[RecoverySource] = []
         self._scan_id: int | None = None
+        self._scan_ids: list[int] = []
+        self._pending_scans: set[int] = set()
+        self._scan_ui: dict[int, dict] = {}
         self._volumes: list = []
         self._recovered_ok = 0
         self._recovered_failed = 0
@@ -126,9 +130,14 @@ class WizardPage(Page):
         layout.addWidget(heading)
 
         self._vol_list = QListWidget()
-        self._vol_list.setSelectionMode(QListWidget.SelectionMode.SingleSelection)
+        self._vol_list.setSelectionMode(QListWidget.SelectionMode.ExtendedSelection)
         self._vol_list.itemSelectionChanged.connect(self._on_volume_selected)
         layout.addWidget(self._vol_list, 1)
+
+        multi_hint = QLabel("Tip: select multiple drives to scan them in parallel (hold Ctrl or Shift).")
+        multi_hint.setProperty("faint", True)
+        multi_hint.setWordWrap(True)
+        layout.addWidget(multi_hint)
 
         row = QHBoxLayout()
         browse = QPushButton("Load disk image…")
@@ -229,6 +238,9 @@ class WizardPage(Page):
         self._scan_label.setProperty("muted", True)
         layout.addWidget(self._scan_label)
 
+        self._scans_box = QVBoxLayout()
+        layout.addLayout(self._scans_box)
+
         self._scan_progress = QProgressBar()
         self._scan_progress.setRange(0, 1000)
         layout.addWidget(self._scan_progress)
@@ -257,6 +269,13 @@ class WizardPage(Page):
         heading = QLabel("Review recovered candidates")
         heading.setStyleSheet("font-size: 18px; font-weight: 600;")
         layout.addWidget(heading)
+
+        scan_row = QHBoxLayout()
+        scan_row.addWidget(QLabel("Scan:"))
+        self._review_scan_combo = QComboBox()
+        self._review_scan_combo.currentIndexChanged.connect(self._on_review_scan_changed)
+        scan_row.addWidget(self._review_scan_combo, 1)
+        layout.addLayout(scan_row)
 
         search_row = QHBoxLayout()
         self._review_search = QLineEdit()
@@ -418,6 +437,47 @@ class WizardPage(Page):
         else:
             self._pending_quick = True
 
+    def start_folder_scan(self) -> None:
+        """Quick action: pick a folder on a local drive and run a quick scan of it."""
+        folder = QFileDialog.getExistingDirectory(self, "Select a folder to scan for deleted files")
+        if not folder:
+            return
+        volume = self._volume_for_path(folder)
+        if volume is not None:
+            source = RecoverySource(
+                kind="volume",
+                mount_point=volume.mount_point,
+                label=volume.label or "",
+                fs_type=volume.file_system or "",
+                size=volume.capacity,
+                path=folder,
+            )
+        else:
+            drive = os.path.splitdrive(os.path.abspath(folder))[0]
+            if not drive or not os.path.isdir(drive + os.sep):
+                QMessageBox.warning(
+                    self,
+                    "Folder not supported",
+                    "The selected folder is not on a mounted local drive. "
+                    "Choose a folder on a local drive, or use the Recovery Wizard "
+                    "to scan a whole volume or a disk image.",
+                )
+                return
+            source = RecoverySource(
+                kind="volume",
+                mount_point=drive + os.sep,
+                label=os.path.basename(folder.rstrip(os.sep)) or drive,
+                fs_type="",
+                size=0,
+                path=folder,
+            )
+        self.reset()
+        self._mode_quick.setChecked(True)
+        self._source = source
+        self._selected_sources = [source]
+        self._folder_label.setText(folder)
+        self._start_scan()
+
     def _begin_quick_scan(self, volume) -> None:
         self._source = RecoverySource(
             kind="volume",
@@ -426,6 +486,7 @@ class WizardPage(Page):
             fs_type=volume.file_system or "",
             size=volume.capacity,
         )
+        self._selected_sources = [self._source]
         self._verify_hash.setChecked(False)
         self._workers.setValue(2)
         self._start_scan()
@@ -439,17 +500,23 @@ class WizardPage(Page):
         items = self._vol_list.selectedItems()
         if not items:
             return
-        index = self._vol_list.row(items[0])
-        if 0 <= index < len(self._volumes):
-            v = self._volumes[index]
-            mount = v.mount_point
-            self._source = RecoverySource(
-                kind="volume",
-                mount_point=mount,
-                label=v.label or "",
-                fs_type=v.file_system or "",
-                size=v.capacity,
-            )
+        sources = []
+        for item in items:
+            index = self._vol_list.row(item)
+            if 0 <= index < len(self._volumes):
+                v = self._volumes[index]
+                sources.append(
+                    RecoverySource(
+                        kind="volume",
+                        mount_point=v.mount_point,
+                        label=v.label or "",
+                        fs_type=v.file_system or "",
+                        size=v.capacity,
+                    )
+                )
+        if sources:
+            self._selected_sources = sources
+            self._source = sources[-1]
             self._image_label.setText("")
             self._folder_label.setText("")
             self._device_error.setText("")
@@ -464,6 +531,7 @@ class WizardPage(Page):
         except OSError:
             pass
         self._source = RecoverySource(kind="image", image_path=path, size=size)
+        self._selected_sources = [self._source]
         self._vol_list.clearSelection()
         self._image_label.setText(path)
         self._folder_label.setText("")
@@ -501,6 +569,7 @@ class WizardPage(Page):
             size=volume.capacity,
             path=folder,
         )
+        self._selected_sources = [self._source]
         self._vol_list.clearSelection()
         self._image_label.setText("")
         self._folder_label.setText(folder)
@@ -540,7 +609,7 @@ class WizardPage(Page):
     def _next(self) -> None:
         step = self._stack.currentIndex()
         if step == 0:
-            if self._source is None:
+            if not self._selected_sources:
                 self._device_error.setText("Select a volume or load an image first.")
                 return
             self._go(1)
@@ -552,7 +621,7 @@ class WizardPage(Page):
 
     # ---------------- scan ----------------
     def _start_scan(self) -> None:
-        if self._source is None:
+        if not self._selected_sources:
             self._mode_error.setText("Select a device first.")
             return
 
@@ -562,23 +631,34 @@ class WizardPage(Page):
             mode = "deep"
         else:
             mode = "partition"
-        config = ScanConfig(
-            mode=mode,
-            source=self._source,
-            filters={
-                "verify_hashes": self._verify_hash.isChecked(),
-                "deleted_only": mode == "quick",
-            },
-            workers=self._workers.value(),
-        )
         self._scan_mode = mode
+        self._scan_ids = []
+        self._pending_scans = set()
+        self._clear_scan_rows()
         try:
-            self._scan_id = self._controller.start(config, self._registry)
+            for source in self._selected_sources:
+                config = ScanConfig(
+                    mode=mode,
+                    source=source,
+                    filters={
+                        "verify_hashes": self._verify_hash.isChecked(),
+                        "deleted_only": mode == "quick",
+                    },
+                    workers=self._workers.value(),
+                )
+                scan_id = self._controller.start(config, self._registry)
+                self._scan_ids.append(scan_id)
+                self._pending_scans.add(scan_id)
+                self._add_scan_row(scan_id, source, mode)
+                self._ctx.events.scan_started.emit(scan_id)
         except Exception as exc:
             self._mode_error.setText(str(exc))
             return
+        self._source = self._selected_sources[-1]
+        self._scan_id = self._scan_ids[0]
+        count = len(self._scan_ids)
         self._scan_progress.setRange(0, 0)
-        self._scan_label.setText("Scanning…")
+        self._scan_label.setText(f"Scanning {count} source(s) in parallel…")
         self._scan_found.setText("")
         self._start_scan_clock()
         self._go(2)
@@ -593,8 +673,15 @@ class WizardPage(Page):
             workers=0,
         )
         self._scan_mode = "recycle"
+        self._scan_ids = []
+        self._pending_scans = set()
+        self._clear_scan_rows()
         try:
             self._scan_id = self._controller.start(config, self._registry)
+            self._scan_ids.append(self._scan_id)
+            self._pending_scans.add(self._scan_id)
+            self._add_scan_row(self._scan_id, self._source, "recycle")
+            self._ctx.events.scan_started.emit(self._scan_id)
         except Exception as exc:
             self._mode_error.setText(str(exc))
             return
@@ -603,6 +690,36 @@ class WizardPage(Page):
         self._scan_found.setText("")
         self._start_scan_clock()
         self._go(2)
+
+    def _clear_scan_rows(self) -> None:
+        while self._scans_box.count():
+            item = self._scans_box.takeAt(0)
+            widget = item.widget()
+            if widget:
+                widget.deleteLater()
+        self._scan_ui = {}
+
+    def _add_scan_row(self, scan_id: int, source: RecoverySource, mode: str) -> None:
+        row = QWidget()
+        row_layout = QVBoxLayout(row)
+        row_layout.setContentsMargins(0, 2, 0, 2)
+        row_layout.setSpacing(4)
+
+        device = source.display_name if source else "?"
+        label = QLabel(f"{device} — {mode}")
+        label.setProperty("muted", True)
+        row_layout.addWidget(label)
+
+        bar = QProgressBar()
+        bar.setRange(0, 1000)
+        row_layout.addWidget(bar)
+
+        found = QLabel("")
+        found.setProperty("faint", True)
+        row_layout.addWidget(found)
+
+        self._scan_ui[scan_id] = {"row": row, "label": label, "bar": bar, "found": found, "found_count": 0}
+        self._scans_box.addWidget(row)
 
     def start_recycle_scan_for(self) -> None:
         """Re-run the last blocked scan against the Recycle Bin instead."""
@@ -613,15 +730,30 @@ class WizardPage(Page):
         self._source = source
         self._start_recycle_scan()
 
-    def _on_scan_blocked(self, _scan_id: int, error: str) -> None:
+    def _on_scan_blocked(self, scan_id: int, error: str) -> None:
+        self._mark_scan_row_done(scan_id, "blocked")
+        device = self._source.display_name if self._source else "device"
+        self._ctx.events.scan_blocked.emit(device, error)
         self._recycle_pending_source = self._source
+        if len(self._scan_ids) > 1:
+            if not self._pending_scans:
+                self._stop_scan_clock()
+                self._scan_timer.setText("")
+                self._scan_progress.setRange(0, 1000)
+                self._scan_progress.setValue(0)
+                self._scan_label.setText(f"Scans blocked: {error}")
+                self._mode_error.setText(
+                    "Raw volume access requires administrator privileges — close "
+                    "the app and reopen it as administrator to scan these volumes "
+                    "directly, or choose the Recycle Bin scan instead."
+                )
+                self._go(1)
+            return
         self._stop_scan_clock()
         self._scan_timer.setText("")
         self._scan_progress.setRange(0, 1000)
         self._scan_progress.setValue(0)
         self._scan_label.setText(f"Scan blocked: {error}")
-        device = self._source.display_name if self._source else "device"
-        self._ctx.events.scan_blocked.emit(device, error)
         answer = QMessageBox.question(
             self,
             "Administrator access required",
@@ -672,58 +804,103 @@ class WizardPage(Page):
     def _stop_scan_clock(self) -> None:
         self._scan_clock.stop()
 
-    def _on_scan_progress(self, _scan_id: int, fraction: float, phase: str) -> None:
-        if self._scan_mode in ("quick", "recycle"):
-            self._scan_progress.setRange(0, 0)
-            if phase:
-                self._scan_label.setText(phase)
+    def _on_scan_progress(self, scan_id: int, fraction: float, phase: str) -> None:
+        self._scan_progress.setRange(0, 0)
+        ui = self._scan_ui.get(scan_id)
+        if ui is None:
             return
-        self._scan_progress.setRange(0, 1000)
-        self._scan_progress.setValue(int(fraction * 1000))
+        if self._scan_mode in ("quick", "recycle"):
+            ui["bar"].setRange(0, 0)
+            if phase:
+                ui["label"].setText(f"{ui['label'].text()} — {phase}")
+            return
+        ui["bar"].setRange(0, 1000)
+        ui["bar"].setValue(int(fraction * 1000))
+        if phase:
+            ui["label"].setText(f"{ui['label'].text()} — {phase}")
 
-    def _on_scan_found(self, _scan_id: int, count: int) -> None:
-        self._scan_found.setText(f"{count} candidates found")
+    def _on_scan_found(self, scan_id: int, count: int) -> None:
+        ui = self._scan_ui.get(scan_id)
+        if ui is not None:
+            ui["found_count"] = count
+            ui["found"].setText(f"{count} candidates found")
+        total = sum(u["found_count"] for u in self._scan_ui.values())
+        self._scan_found.setText(f"{total} candidates found")
 
-    def _on_scan_finished(self, _scan_id: int) -> None:
-        self._stop_scan_clock()
-        self._update_scan_timer()
-        self._complete_note.setText(self._scan_summary(cancelled=False))
-        self._scan_progress.setRange(0, 1000)
-        self._scan_progress.setValue(1000)
-        self._scan_label.setText("Scan finished. Loading results…")
-        self._load_review_rows()
-        self._load_vaults()
-        self._maybe_show_folder_hint()
-        self._go(3)
+    def _on_scan_finished(self, scan_id: int) -> None:
+        self._ctx.events.scan_finished.emit(scan_id)
+        self._mark_scan_row_done(scan_id, "finished")
+        if self._pending_scans:
+            return
+        self._scan_label.setText("All scans finished. Loading results…")
+        self._go_review(cancelled=False)
 
     def _on_scan_cancelled(self, _scan_id: int, count: int) -> None:
-        self._stop_scan_clock()
-        self._update_scan_timer()
-        self._complete_note.setText(self._scan_summary(cancelled=True))
-        self._scan_progress.setRange(0, 1000)
-        self._scan_progress.setValue(0)
-        self._load_review_rows()
-        self._load_vaults()
+        self._ctx.events.scan_cancelled.emit(_scan_id, count)
+        self._mark_scan_row_done(_scan_id, "cancelled")
+        if self._pending_scans:
+            return
+        self._go_review(cancelled=True)
         self._review_count.setText(
             f"{count} file(s) — scan cancelled, partial results are recoverable"
         )
+
+    def _mark_scan_row_done(self, scan_id: int, text: str) -> None:
+        ui = self._scan_ui.get(scan_id)
+        if ui is not None:
+            ui["label"].setText(f"{ui['label'].text()} — {text}")
+            ui["bar"].setRange(0, 1000)
+            ui["bar"].setValue(1000)
+        self._pending_scans.discard(scan_id)
+
+    def _go_review(self, cancelled: bool = False) -> None:
+        self._stop_scan_clock()
+        self._update_scan_timer()
+        self._scan_progress.setRange(0, 1000)
+        self._scan_progress.setValue(1000)
+        self._populate_review_combo()
+        self._load_review_rows()
+        self._load_vaults()
         self._maybe_show_folder_hint()
+        self._complete_note.setText(self._scan_summary(cancelled=cancelled))
         self._go(3)
 
+    def _populate_review_combo(self) -> None:
+        self._review_scan_combo.blockSignals(True)
+        self._review_scan_combo.clear()
+        for sid in self._scan_ids:
+            row = self._ctx.db.query_one(
+                "SELECT device_id, mode FROM scans WHERE id = ?", (sid,)
+            )
+            mode = row["mode"] if row else "?"
+            device = row["device_id"] if row and row["device_id"] else "?"
+            self._review_scan_combo.addItem(f"#{sid} · {mode} · {device}", sid)
+        if self._scan_ids:
+            self._review_scan_combo.setCurrentIndex(len(self._scan_ids) - 1)
+        self._review_scan_combo.blockSignals(False)
+        self._scan_id = self._review_scan_combo.currentData()
+
+    def _on_review_scan_changed(self) -> None:
+        self._scan_id = self._review_scan_combo.currentData()
+        self._load_review_rows()
+        self._maybe_show_folder_hint()
+
     def _scan_summary(self, cancelled: bool) -> str:
-        count = 0
-        if self._scan_id is not None:
+        total = 0
+        for sid in self._scan_ids:
             rows = self._ctx.db.query(
-                "SELECT COUNT(*) AS n FROM files WHERE scan_id = ?", (self._scan_id,)
+                "SELECT COUNT(*) AS n FROM files WHERE scan_id = ?", (sid,)
             )
             if rows:
-                count = rows[0]["n"]
+                total += rows[0]["n"]
         elapsed = ""
         if self._scan_started is not None:
             elapsed = _fmt_elapsed(datetime.datetime.now() - self._scan_started)
         if cancelled:
-            return f"Scan cancelled · {count} partial file(s) found · {elapsed}"
-        return f"Scan finished · {count} file(s) found · {elapsed}"
+            return f"Scan cancelled · {total} partial file(s) found · {elapsed}"
+        if len(self._scan_ids) > 1:
+            return f"Scan finished · {total} file(s) found across {len(self._scan_ids)} source(s) · {elapsed}"
+        return f"Scan finished · {total} file(s) found · {elapsed}"
 
     def _maybe_show_folder_hint(self) -> None:
         """Explain zero quick-scan results and offer the Recycle Bin scan."""
@@ -751,11 +928,33 @@ class WizardPage(Page):
         self._folder_hint.setVisible(True)
         self._recycle_btn.setVisible(True)
 
-    def _on_scan_failed(self, _scan_id: int, error: str) -> None:
-        self._stop_scan_clock()
-        self._scan_progress.setRange(0, 1000)
-        self._scan_progress.setValue(0)
-        self._scan_label.setText(f"Scan failed: {error}")
+    def _on_scan_failed(self, scan_id: int, error: str) -> None:
+        self._ctx.events.scan_error.emit(scan_id, error)
+        ui = self._scan_ui.get(scan_id)
+        if ui is not None:
+            ui["label"].setText(f"{ui['label'].text()} — failed: {error}")
+            ui["bar"].setRange(0, 1000)
+            ui["bar"].setValue(0)
+        self._pending_scans.discard(scan_id)
+        if self._pending_scans:
+            return
+        any_ok = False
+        for sid in self._scan_ids:
+            rows = self._ctx.db.query(
+                "SELECT COUNT(*) AS n FROM files WHERE scan_id = ?", (sid,)
+            )
+            if rows and rows[0]["n"]:
+                any_ok = True
+        if any_ok:
+            self._scan_label.setText("Some scans failed; showing the results that were found.")
+            self._go_review(cancelled=False)
+        else:
+            self._stop_scan_clock()
+            self._scan_progress.setRange(0, 1000)
+            self._scan_progress.setValue(0)
+            self._scan_label.setText(f"Scan failed: {error}")
+            self._mode_error.setText(str(error))
+            self._go(1)
 
     # ---------------- review ----------------
     def _load_review_rows(self) -> None:
@@ -902,13 +1101,18 @@ class WizardPage(Page):
     def open_with_source(self, source: RecoverySource) -> None:
         self.reset()
         self._source = source
+        self._selected_sources = [source]
         self._go(1)
         if source.kind == "image":
             self._image_label.setText(source.image_path)
 
     def reset(self) -> None:
         self._source = None
+        self._selected_sources = []
         self._scan_id = None
+        self._scan_ids = []
+        self._pending_scans = set()
+        self._clear_scan_rows()
         self._pending_quick = False
         self._allowed = 0
         self._scan_mode = None
@@ -927,6 +1131,9 @@ class WizardPage(Page):
         self._vol_list.clearSelection()
         self._recovered_ok = 0
         self._recovered_failed = 0
+        self._review_scan_combo.blockSignals(True)
+        self._review_scan_combo.clear()
+        self._review_scan_combo.blockSignals(False)
         self._go(0)
 
 

@@ -142,6 +142,9 @@ class DashboardPage(Page):
         actions.addWidget(recover_btn)
         scan_btn = QPushButton("Quick Scan")
         actions.addWidget(scan_btn)
+        folder_btn = QPushButton("Scan Folder")
+        folder_btn.setToolTip("Pick a folder on a local drive and run a quick scan of it")
+        actions.addWidget(folder_btn)
         img_btn = QPushButton("Create Disk Image")
         actions.addWidget(img_btn)
         theme_btn = QPushButton("Toggle theme")
@@ -163,6 +166,7 @@ class DashboardPage(Page):
 
         recover_btn.clicked.connect(lambda: self._ctx.events.quick_action_requested.emit("wizard"))
         scan_btn.clicked.connect(lambda: self._ctx.events.quick_action_requested.emit("quick_scan"))
+        folder_btn.clicked.connect(lambda: self._ctx.events.quick_action_requested.emit("scan_folder"))
         img_btn.clicked.connect(lambda: self._ctx.events.quick_action_requested.emit("image"))
         self._ctx.events.scan_blocked.connect(self._show_blocked)
         self._ctx.events.drives_changed.connect(self.refresh)

@@ -144,6 +144,7 @@ def _qss(p: Palette) -> str:
     QPushButton#Ghost {{ background: transparent; border: 1px solid $border; outline: none; }}
     QPushButton#Ghost:hover {{ background: $surface_alt; }}
     QPushButton#Ghost:focus {{ border: 2px solid $accent; }}
+    QPushButton#Ghost:checked {{ background: rgba(46,140,255,0.14); color: $accent; border-color: $accent; }}
     QPushButton#Danger {{ color: $error; border-color: rgba(255,77,94,0.4); }}
     QPushButton#Danger:hover {{ background: rgba(255,77,94,0.12); }}
     QPushButton#Danger:focus {{ border: 2px solid $error; }}

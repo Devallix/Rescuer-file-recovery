@@ -1,6 +1,7 @@
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import (
+    QButtonGroup,
     QCheckBox,
     QComboBox,
     QHBoxLayout,
@@ -38,6 +39,45 @@ def _human(size: int) -> str:
             return f"{int(value)} {u}" if u == "B" else f"{value:.1f} {u}"
         value /= 1024
     return f"{value:.1f} PB"
+
+
+TYPE_CHIPS = {
+    "images": {
+        "exts": {"jpg", "jpeg", "png", "gif", "bmp", "webp", "tiff", "tif", "heic", "ico", "svg"},
+        "cats": {"photos"},
+    },
+    "documents": {
+        "exts": {"pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "rtf", "odt", "ods", "csv", "md"},
+        "cats": {"documents", "cad", "databases", "design", "email", "source"},
+    },
+    "video": {
+        "exts": {"mp4", "avi", "mkv", "mov", "wmv", "flv", "webm", "m4v", "mpg", "mpeg", "3gp"},
+        "cats": {"videos"},
+    },
+    "audio": {
+        "exts": {"mp3", "wav", "flac", "ogg", "aac", "m4a", "wma", "mid", "midi"},
+        "cats": {"audio"},
+    },
+    "archives": {
+        "exts": {"zip", "rar", "7z", "tar", "gz", "bz2", "xz", "iso", "cab"},
+        "cats": {"archives"},
+    },
+}
+KNOWN_EXTS = {e for group in TYPE_CHIPS.values() for e in group["exts"]}
+
+
+def _matches_chip(row, chip_key: str) -> bool:
+    if chip_key == "all":
+        return True
+    if chip_key == "other":
+        ext = (row.get("ext") or "").lstrip(".").lower()
+        cat = (row.get("category") or "").lower()
+        known_cats = {c for group in TYPE_CHIPS.values() for c in group["cats"]}
+        return ext not in KNOWN_EXTS and cat not in known_cats
+    group = TYPE_CHIPS[chip_key]
+    ext = (row.get("ext") or "").lstrip(".").lower()
+    cat = (row.get("category") or "").lower()
+    return ext in group["exts"] or cat in group["cats"]
 
 
 class ResultsPage(Page):
@@ -89,6 +129,25 @@ class ResultsPage(Page):
         self._duplicates_only.toggled.connect(self._apply_filters)
         toolbar.addWidget(self._duplicates_only)
         root.addLayout(toolbar)
+
+        chips_row = QHBoxLayout()
+        chips_row.setSpacing(8)
+        self._chip_group = QButtonGroup(self)
+        self._chip_group.setExclusive(True)
+        self._chips: dict[str, QPushButton] = {}
+        for key, label in (("all", "All"), ("images", "Images"), ("documents", "Documents"),
+                           ("video", "Video"), ("audio", "Audio"), ("archives", "Archives"),
+                           ("other", "Other")):
+            btn = QPushButton(label)
+            btn.setObjectName("Ghost")
+            btn.setCheckable(True)
+            self._chip_group.addButton(btn)
+            self._chips[key] = btn
+            chips_row.addWidget(btn)
+        self._chips["all"].setChecked(True)
+        self._chip_group.buttonClicked.connect(lambda _: self._apply_filters())
+        chips_row.addStretch(1)
+        root.addLayout(chips_row)
 
         splitter = QSplitter(Qt.Orientation.Horizontal)
         self._table = QTableWidget(0, 7)
@@ -167,6 +226,13 @@ class ResultsPage(Page):
             max_size=self._max_size.value() if self._max_size.value() > 0 else None,
             limit=2000,
         )
+        chip_key = "all"
+        for key, btn in self._chips.items():
+            if btn.isChecked():
+                chip_key = key
+                break
+        if chip_key != "all":
+            rows = [r for r in rows if _matches_chip(r, chip_key)]
         if self._duplicates_only.isChecked():
             seen = {}
             dup_ids = set()

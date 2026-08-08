@@ -12,6 +12,7 @@ class EventBus(QObject):
     scan_started = Signal(int)
     scan_progress = Signal(int, float)
     scan_finished = Signal(int)
+    scan_cancelled = Signal(int, int)
     scan_error = Signal(int, str)
     scan_blocked = Signal(str, str)
     files_recovered = Signal(list)

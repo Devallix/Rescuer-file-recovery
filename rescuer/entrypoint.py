@@ -101,19 +101,8 @@ def _schedule_update_check(ctx) -> None:
             record_check(ctx.db, __version__, "up-to-date")
             return
         record_check(ctx.db, __version__, f"update-available {info.version}")
-        from PySide6.QtWidgets import QMessageBox
-        box = QMessageBox(ctx.window)
-        box.setIcon(QMessageBox.Icon.Information)
-        box.setWindowTitle("Update available")
-        box.setText(f"Rescuer {info.version} is available.")
-        box.setInformativeText(info.notes or "Open the releases page to download the update.")
-        box.setStandardButtons(QMessageBox.StandardButton.Open | QMessageBox.StandardButton.Ignore)
-        box.button(QMessageBox.StandardButton.Open).setText("Download")
-        box.button(QMessageBox.StandardButton.Ignore).setText("Later")
-        box.setDefaultButton(QMessageBox.StandardButton.Ignore)
-        if box.exec() == QMessageBox.StandardButton.Open:
-            import webbrowser
-            webbrowser.open(info.url)
+        from rescuer.engine.updates.installer import offer_update
+        offer_update(ctx.window, info)
 
     def _error(exc):
         record_check(ctx.db, __version__, f"error: {exc}")
