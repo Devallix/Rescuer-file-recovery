@@ -52,6 +52,10 @@ def make_zip(version: str) -> Path:
         raise SystemExit(f"Build not found at {DIST}. Run without --skip-build first.")
     RELEASES.mkdir(parents=True, exist_ok=True)
     out = RELEASES / f"Rescuer_{version}.zip"
+    for old in RELEASES.glob("Rescuer_*.zip"):
+        if old != out:
+            print(f"Removing old release: {old}")
+            old.unlink(missing_ok=True)
     with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as zf:
         for path in sorted(DIST.rglob("*")):
             if path.is_dir():
