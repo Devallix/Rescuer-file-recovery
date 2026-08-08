@@ -1,1 +1,1 @@
-C:/Users/Mfantsipim-Test/PycharmProjects/Rescuer[[:space:]]-[[:space:]]file[[:space:]]recovery[[:space:]]app/releases/Rescuer_0.1.2.zip filter=lfs diff=lfs merge=lfs -text
+*.zip filter=lfs diff=lfs merge=lfs -text
