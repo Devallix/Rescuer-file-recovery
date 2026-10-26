@@ -6,3 +6,5 @@ APP_TAGLINE = "Bringing Lost Files Back to Life"
 APP_DESCRIPTION = "Professional File Recovery & Data Restoration Suite"
 APP_DEVELOPER = "Powered by Devallix"
 APP_ID = "com.rescuer.app"
+
+
