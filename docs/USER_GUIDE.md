@@ -8,11 +8,6 @@ Rescuer is a professional file-recovery and data-restoration suite for Windows 1
 
 ### Installation
 
-```powershell
-pip install -r requirements.txt
-python main.py
-```
-
 Requirements: Windows 10/11 x64, Python 3.13 or newer.
 
 ### Running as Administrator
@@ -50,10 +45,10 @@ The navigation rail on the left switches between the main areas:
 
 The **Help** menu in the menu bar provides:
 
-- **User Guide** — opens this document.
+- **User Guide** — opens this document in an in-app window.
 - **About** — version and build information.
 - **Developer** — developer credits.
-- **End User License Agreement** — the license text.
+- **End User License Agreement** — the license text, shown in an in-app window.
 
 ### System tray
 

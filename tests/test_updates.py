@@ -4,7 +4,15 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from rescuer.core.database import Database
-from rescuer.engine.updates.checker import UpdateError, check_for_updates, download_update, record_check, verify_sha256
+from rescuer.engine.updates.checker import (
+    UpdateError,
+    check_for_updates,
+    download_update,
+    is_newer,
+    record_check,
+    verify_sha256,
+    version_key,
+)
 
 
 class FakeResponse:
@@ -67,6 +75,55 @@ def test_check_for_updates_http_error(db):
         mock_get.return_value = FakeResponse({}, status_code=500)
         with pytest.raises(UpdateError):
             check_for_updates("0.1.0", "http://example.com/version.json")
+
+
+def test_check_for_updates_older_version_is_ignored(db):
+    with patch("rescuer.engine.updates.checker.requests.get") as mock_get:
+        mock_get.return_value = FakeResponse({
+            "version": "0.1.1",
+            "url": "http://example.com/download",
+        })
+        assert check_for_updates("0.1.2", "http://example.com/version.json") is None
+
+
+def test_check_for_updates_accepts_v_prefix_and_numeric_ordering(db):
+    with patch("rescuer.engine.updates.checker.requests.get") as mock_get:
+        mock_get.return_value = FakeResponse({
+            "version": "v0.1.10",
+            "url": "http://example.com/download",
+        })
+        result = check_for_updates("0.1.9", "http://example.com/version.json")
+    assert result is not None
+    assert result.version == "0.1.10"
+
+
+def test_check_for_updates_missing_version_is_an_error(db):
+    with patch("rescuer.engine.updates.checker.requests.get") as mock_get:
+        mock_get.return_value = FakeResponse({"url": "http://example.com/download"})
+        with pytest.raises(UpdateError):
+            check_for_updates("0.1.0", "http://example.com/version.json")
+
+
+def test_check_for_updates_missing_url_is_an_error(db):
+    with patch("rescuer.engine.updates.checker.requests.get") as mock_get:
+        mock_get.return_value = FakeResponse({"version": "0.2.0"})
+        with pytest.raises(UpdateError):
+            check_for_updates("0.1.0", "http://example.com/version.json")
+
+
+def test_check_for_updates_non_object_json_is_an_error(db):
+    with patch("rescuer.engine.updates.checker.requests.get") as mock_get:
+        mock_get.return_value = FakeResponse(["not", "a", "manifest"])
+        with pytest.raises(UpdateError):
+            check_for_updates("0.1.0", "http://example.com/version.json")
+
+
+def test_version_key_orders_numerically():
+    assert version_key("0.1.10") > version_key("0.1.9")
+    assert version_key("v1.0.0") == version_key("1.0")
+    assert is_newer("0.2.0", "0.1.9") is True
+    assert is_newer("0.1.2", "0.1.2") is False
+    assert is_newer("0.1.1", "0.1.2") is False
 
 
 def test_check_for_updates_invalid_json(db):

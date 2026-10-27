@@ -27,9 +27,9 @@ Put both on any static HTTPS host (GitHub Releases, S3, Cloudflare R2, or a plai
 
 **Generating the manifest:** `python tools/build_update.py` builds the ZIP, computes `sha256`/`size_bytes`, stamps `published_at`, and writes a ready-to-host `manifest.json` to the project root. Only the `url` field needs editing (the build tool keeps your edited URL and notes across rebuilds). Pass `--skip-build` to re-zip without rebuilding, or `--url "https://…"` / `--notes "…"` to set values from the command line.
 
-The checker reads `data.get("version")`, `"url"`, `"notes"`, `"published_at"`, `"size_bytes"`, `"sha256"`. If `version` matches the running version, no update is offered. If `sha256` is missing, verification is skipped (include it).
+The checker reads `data.get("version")`, `"url"`, `"notes"`, `"published_at"`, `"size_bytes"`, `"sha256"`. An update is offered only when `version` is numerically newer than the running version. If `sha256` is missing, verification is skipped (include it).
 
-> **Important:** the default endpoint is `https://api.github.com/repos/rescuer-app/rescuer/releases/latest` (GitHub's API schema). That response does **not** match this manifest format, so point the app at your own manifest URL (see step 4).
+> The default endpoint is `https://github.com/Devallix/Rescuer-file-recovery/raw/refs/heads/main/manifest.json`, which serves the `manifest.json` committed to this repository. Rebuild and push that file whenever you publish a release, or point the app at your own manifest URL (see step 4).
 
 ## 3. Zip layout — don't change it
 
@@ -39,8 +39,8 @@ The zip must contain `Rescuer.exe` **and** `_internal/` at the **root** — exac
 
 The endpoint is stored in the app config (Settings → Updates → "Update endpoint", or the DB `config` table key `updates.endpoint`). Do **one** of:
 
-- **New installs:** change the default in `rescuer/core/database.py:97` to your manifest URL (e.g. `https://your-host.example.com/rescuer/manifest.json`). Note this only applies to DBs created afterward.
-- **Already-deployed 0.1.0 clients:** they already have the old GitHub default in their DB, so update the endpoint on the Settings page, or ship a config migration.
+- **New installs:** the default is `https://github.com/Devallix/Rescuer-file-recovery/raw/refs/heads/main/manifest.json`. Change `rescuer/core/database.py:97` if you host the manifest elsewhere.
+- **Already-deployed clients:** update the endpoint on the Settings page. (Clients that never edited it pick up the new default automatically, since only edited values are stored in the DB.)
 
 ## 5. Install location requirement
 
@@ -53,4 +53,4 @@ The updater renames the **install folder's parent** and writes `rescuer_updater_
 3. Accept the prompt → watch the progress dialog → app quits, the swap runs, the new 0.1.1 window opens.
 4. Confirm `releases/Rescuer_0.1.1.zip` is deleted from the cache after the swap and no `Rescuer.old_*` folders are left.
 
-**Version rule:** manifest `version` must sort higher than the installed one (`0.1.1 > 0.1.0` works; plain string compare is used, so keep numeric versions consistent, e.g. `0.10.0 > 0.9.9` but `0.1.10` would compare less than `0.1.2`).
+**Version rule:** the manifest `version` must sort numerically higher than the installed one (`0.1.10 > 0.1.9`, `0.2.0 > 0.1.2`). Older versions are ignored, so a stale manifest can no longer trigger a downgrade prompt. A leading `v` is accepted.

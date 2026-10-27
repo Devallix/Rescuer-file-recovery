@@ -25,6 +25,7 @@ def _base_cache_dir() -> Path:
 class Paths:
     app_root = Path(__file__).resolve().parent.parent
     img_dir = app_root / "img"
+    docs_dir = app_root / "docs"
     data_dir = _base_data_dir() / "Rescuer"
     cache_dir = _base_cache_dir() / "Rescuer" / "cache"
     logs_dir = data_dir / "logs"

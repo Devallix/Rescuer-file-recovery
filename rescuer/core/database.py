@@ -94,7 +94,7 @@ class Config:
         "logging.level": "INFO",
         "general.launch_minimized": False,
         "general.check_updates": True,
-        "updates.endpoint": "https://api.github.com/repos/rescuer-app/rescuer/releases/latest",
+        "updates.endpoint": "https://github.com/Devallix/Rescuer-file-recovery/raw/refs/heads/main/manifest.json",
         "updates.channel": "stable",
         "signatures.custom_dir": "",
     }

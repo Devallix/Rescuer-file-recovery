@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
 )
 
+from rescuer import __version__
 from rescuer.core.app_context import AppContext
 from rescuer.core.theme import PALETTES
 from rescuer.ui.pages.base import Page, PageHeader
@@ -94,19 +95,34 @@ class SettingsPage(Page):
         self._ctx.config.set("signatures.custom_dir", text)
 
     def _check_now(self) -> None:
+        endpoint = (
+            self._endpoint_edit.text()
+            or self._ctx.config.get("updates.endpoint", "")
+        ).strip()
+        if not endpoint:
+            QMessageBox.warning(
+                self,
+                "Update check",
+                "No update endpoint is configured. Set one in Settings → Updates.",
+            )
+            return
         self._check_now_btn.setEnabled(False)
         self._check_now_btn.setText("Checking…")
         from rescuer.core.worker_pool import WorkerPool
         from rescuer.engine.updates.checker import check_for_updates
         pool = WorkerPool()
-        endpoint = self._endpoint_edit.text() or self._ctx.config.get("updates.endpoint", "")
-        current_version = getattr(self._ctx, "app", None) and getattr(self._ctx.app, "applicationVersion", lambda: "")() or "0.1.0"
 
         def _done(result):
             self._check_now_btn.setEnabled(True)
             self._check_now_btn.setText("Check now")
             if result is None:
                 QMessageBox.information(self, "Up to date", "You are running the latest version.")
+            elif not result.is_valid:
+                QMessageBox.warning(
+                    self,
+                    "Update check failed",
+                    "The update manifest is missing the download URL.",
+                )
             else:
                 from rescuer.engine.updates.installer import offer_update
                 offer_update(self, result)
@@ -116,7 +132,7 @@ class SettingsPage(Page):
             self._check_now_btn.setText("Check now")
             QMessageBox.warning(self, "Update check failed", str(exc))
 
-        pool.submit(check_for_updates, current_version, endpoint, on_done=_done, on_error=_error)
+        pool.submit(check_for_updates, __version__, endpoint, on_done=_done, on_error=_error)
 
     def _clear_old_scans(self) -> None:
         import datetime

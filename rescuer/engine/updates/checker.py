@@ -1,11 +1,8 @@
-import datetime
 import hashlib
-import json
 import logging
 import os
 import tempfile
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Callable
 
 import requests
@@ -33,8 +30,31 @@ class UpdateError(Exception):
     pass
 
 
-def _now() -> str:
-    return datetime.datetime.now().isoformat(sep=" ", timespec="seconds")
+def version_key(value: str) -> tuple[int, ...]:
+    """Turn a version string into a comparable tuple.
+
+    Handles an optional ``v`` prefix and pre-release/build suffixes, so
+    ``v0.1.10`` correctly sorts above ``0.1.9`` (plain string comparison
+    would get this backwards).
+    """
+    text = str(value or "").strip()
+    if text[:1] in ("v", "V"):
+        text = text[1:]
+    core = text.split("-", 1)[0].split("+", 1)[0]
+    parts: list[int] = []
+    for part in core.split("."):
+        digits = "".join(ch for ch in part if ch.isdigit())
+        if not digits:
+            break
+        parts.append(int(digits))
+    while len(parts) < 4:
+        parts.append(0)
+    return tuple(parts[:4])
+
+
+def is_newer(latest: str, current: str) -> bool:
+    """Return True when ``latest`` is a strictly newer version than ``current``."""
+    return version_key(latest) > version_key(current)
 
 
 def check_for_updates(
@@ -43,7 +63,14 @@ def check_for_updates(
     timeout: int = 15,
 ) -> UpdateInfo | None:
     try:
-        resp = requests.get(endpoint, timeout=timeout, headers={"Accept": "application/json"})
+        resp = requests.get(
+            endpoint,
+            timeout=timeout,
+            headers={
+                "Accept": "application/json",
+                "User-Agent": f"Rescuer/{current_version}",
+            },
+        )
         resp.raise_for_status()
     except Exception as exc:
         raise UpdateError(f"Update check failed: {exc}") from exc
@@ -53,19 +80,35 @@ def check_for_updates(
     except ValueError as exc:
         raise UpdateError("Invalid update manifest: not JSON") from exc
 
-    latest_version = str(data.get("version", "")).strip()
+    if not isinstance(data, dict):
+        raise UpdateError("Invalid update manifest: not a JSON object")
+
+    latest_version = str(data.get("version", "") or "").strip()
+    if latest_version[:1] in ("v", "V"):
+        latest_version = latest_version[1:]
     if not latest_version:
+        raise UpdateError("Invalid update manifest: missing version")
+
+    # Never offer an older build (e.g. after a manual install or rollback).
+    if not is_newer(latest_version, current_version):
         return None
-    if latest_version == current_version:
-        return None
+
+    url = str(data.get("url", "") or "").strip()
+    if not url:
+        raise UpdateError("Invalid update manifest: missing download URL")
+
+    try:
+        size_bytes = int(data.get("size_bytes", 0) or 0)
+    except (TypeError, ValueError):
+        size_bytes = 0
 
     return UpdateInfo(
         version=latest_version,
-        url=str(data.get("url", "")),
-        notes=str(data.get("notes", "")),
-        published_at=str(data.get("published_at", "")),
-        size_bytes=int(data.get("size_bytes", 0) or 0),
-        sha256=str(data.get("sha256", "")),
+        url=url,
+        notes=str(data.get("notes", "") or ""),
+        published_at=str(data.get("published_at", "") or ""),
+        size_bytes=size_bytes,
+        sha256=str(data.get("sha256", "") or ""),
     )
 
 

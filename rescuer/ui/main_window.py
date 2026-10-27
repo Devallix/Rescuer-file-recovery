@@ -1,8 +1,11 @@
+from pathlib import Path
+
 from PySide6.QtCore import Qt, QPropertyAnimation, Signal
 from PySide6.QtGui import QAction, QIcon
 from PySide6.QtWidgets import QGraphicsOpacityEffect, QHBoxLayout, QLabel, QMainWindow, QMenuBar, QStackedWidget, QStatusBar, QWidget
 
 from rescuer import APP_NAME, APP_TAGLINE
+from rescuer.constants import DEFAULT_THEME
 from rescuer.core.app_context import AppContext
 from rescuer.core.theme import get_palette
 from rescuer.integrations.windows.admin import is_admin
@@ -15,6 +18,7 @@ from rescuer.ui.pages.results_page import ResultsPage
 from rescuer.ui.pages.settings_page import SettingsPage
 from rescuer.ui.pages.wizard_page import WizardPage
 from rescuer.ui.tray import SystemTray
+from rescuer.ui.widgets.document_dialog import DocumentDialog
 
 NAV_ITEMS = [
     NavItem("dashboard", "Dashboard", "dashboard", "Ctrl+1"),
@@ -220,28 +224,33 @@ class MainWindow(QMainWindow):
         self.setMenuBar(menubar)
 
     def _open_user_guide(self) -> None:
-        import os
-        from pathlib import Path
-        guide = Path(__file__).resolve().parents[2] / "docs" / "USER_GUIDE.md"
-        if guide.exists():
-            os.startfile(str(guide))
-        else:
-            from PySide6.QtWidgets import QMessageBox
-            QMessageBox.information(self, "User Guide", "Open docs/USER_GUIDE.md in your editor.")
+        self._open_document(
+            "User Guide", Paths.docs_dir / "USER_GUIDE.md", markdown=True
+        )
 
     def _open_eula(self) -> None:
-        import os
-        import sys
-        from pathlib import Path
-        if getattr(sys, "frozen", False):
-            eula = Path(getattr(sys, "_MEIPASS", ".")) / "docs" / "EULA.txt"
-        else:
-            eula = Path(__file__).resolve().parents[2] / "docs" / "EULA.txt"
-        if eula.exists():
-            os.startfile(str(eula))
-        else:
+        self._open_document("End User License Agreement", Paths.docs_dir / "EULA.txt")
+
+    def _open_document(self, title: str, path: Path, markdown: bool = False) -> None:
+        try:
+            text = path.read_text(encoding="utf-8", errors="replace")
+        except OSError as exc:
             from PySide6.QtWidgets import QMessageBox
-            QMessageBox.information(self, "End User License Agreement", "Open docs/EULA.txt in your editor.")
+
+            QMessageBox.warning(
+                self,
+                title,
+                f"Could not open {path.name}:\n{exc}",
+            )
+            return
+        palette = get_palette(self._ctx.config.get("appearance.theme", DEFAULT_THEME))
+        DocumentDialog(
+            title,
+            text,
+            palette=palette,
+            markdown=markdown,
+            parent=self,
+        ).exec()
 
     def _apply_theme_name(self, theme: str) -> None:
         palette = get_palette(theme)
@@ -281,8 +290,8 @@ class MainWindow(QMainWindow):
             f"<i>{APP_TAGLINE}</i><br><br>"
             "Professional file recovery & data restoration suite for Windows.<br><br>"
             "Built with Python 3.13+, PySide6, and The Sleuth Kit.<br><br>"
-            "Documentation: docs/USER_GUIDE.md<br>"
-            "Repository: https://github.com/rescuer-app/rescuer<br><br>"
+            "Documentation: Help → User Guide<br>"
+            "Repository: https://github.com/Devallix/Rescuer-file-recovery<br><br>"
             "Proprietary. All rights reserved.",
         )
 

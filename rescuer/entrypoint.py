@@ -99,13 +99,20 @@ def _schedule_update_check(ctx) -> None:
     def _done(info):
         if info is None:
             record_check(ctx.db, __version__, "up-to-date")
+            ctx.logger.info("Update check: already running latest version %s", __version__)
+            return
+        if not info.is_valid:
+            record_check(ctx.db, __version__, "error: invalid update manifest")
+            ctx.logger.warning("Update check: manifest is missing the download URL")
             return
         record_check(ctx.db, __version__, f"update-available {info.version}")
+        ctx.logger.info("Update check: version %s is available", info.version)
         from rescuer.engine.updates.installer import offer_update
         offer_update(ctx.window, info)
 
     def _error(exc):
         record_check(ctx.db, __version__, f"error: {exc}")
+        ctx.logger.warning("Update check failed: %s", exc)
 
     pool = WorkerPool()
     pool.submit(check_for_updates, __version__, endpoint, on_done=_done, on_error=_error)
